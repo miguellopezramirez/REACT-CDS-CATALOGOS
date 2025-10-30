@@ -1,7 +1,9 @@
 // TableLables.tsx
+import { useEffect, useState } from 'react';
 import { useIndeterminateRowSelection } from '@ui5/webcomponents-react/AnalyticalTableHooks';
 import { Title } from '@ui5/webcomponents-react/Title';
 import { AnalyticalTable, AnalyticalTableSelectionMode } from '@ui5/webcomponents-react';
+import { fetchLabels, TableParentRow } from '../services/labelService';
 
 const tableHooks = [useIndeterminateRowSelection()]; // should be memoized
 
@@ -53,7 +55,7 @@ const columns = [
     Header: "IMAGEN",
     accessor: "imagen",
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Cell: ({ cell: { value } }: any) => <img src={value} style={{height: "40px"}} />
+    Cell: ({ cell: { value } }: any) => (value ? <img src={value} style={{ height: "40px" }} /> : null)
   },{
     Header: "ROUTE",
     accessor: "ruta",
@@ -62,42 +64,16 @@ const columns = [
     accessor: "descripcion"
   }
 ];
-const data = [{
-    parent: true,
-    idsociedad: "1",
-    idcedi: "2",
-    idetiqueta: "Aplicacion",
-    etiqueta: "Aplicaciones",
-    indice: "App",
-    coleccion: "app",
-    seccion: "apps",
-    secuencia: 10,
-    imagen: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/App_Store_%28iOS%29.svg/2048px-App_Store_%28iOS%29.svg.png",
-    ruta: "/app",
-    descripcion: "Aplicaciones del uso de la empresa",
-    subRows: [
-        {
-            idsociedad: "1",
-            idcedi: "2",
-            idetiqueta: "Aplicacion",
-            idvalor: "AppSeguridad",
-            idvalorpa: "",
-            valor: "Seguridad",
-            alias: "seg",
-            indice: "seg",
-            coleccion: "app",
-            seccion: "apps",
-            secuencia: 11,
-            imagen: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/App_Store_%28iOS%29.svg/2048px-App_Store_%28iOS%29.svg.png",
-            ruta: "/Seguridad",
-            descripcion: "Aplicación de seguridad de acceso de usuarios",
-            
-        },
-    ],
-}];
-
 
 function TableLabels(){
+    const [data, setData] = useState<TableParentRow[]>([]);
+
+    useEffect(() => {
+        fetchLabels().then((transformedData) => {
+            setData(transformedData);
+        });
+    }, []);
+
     return <>
          <Title level="H1">
             Etiquetas
