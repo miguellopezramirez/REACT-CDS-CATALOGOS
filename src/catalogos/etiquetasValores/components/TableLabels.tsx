@@ -1,12 +1,11 @@
-// TableLables.tsx
 import { useEffect, useState } from 'react';
-import { useIndeterminateRowSelection } from '@ui5/webcomponents-react/AnalyticalTableHooks';
-
-import { AnalyticalTable, AnalyticalTableSelectionMode } from '@ui5/webcomponents-react';
+import { AnalyticalTable, AnalyticalTableHooks, AnalyticalTableSelectionMode, Button } from '@ui5/webcomponents-react';
 import { fetchLabels, TableParentRow } from '../services/labelService';
+import ModalUpdateCatalogo from './ModalUpdateCatalogo';
+import { subscribe, getLabels, setLabels } from '../store/labelStore';
 
-const tableHooks = [useIndeterminateRowSelection()]; // should be memoized
 
+const tableHooks = [AnalyticalTableHooks.useManualRowSelect('isSelected')]; // should be memoized
 const columns = [
   {
     Header: "Etiqueta/Valor",
@@ -67,22 +66,67 @@ const columns = [
 
 function TableLabels(){
     const [data, setData] = useState<TableParentRow[]>([]);
+    const [selectedLabel, setSelectedLabel] = useState<TableParentRow | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
+        const handleStoreChange = () => {
+            setData(getLabels());
+        };
+
+        const unsubscribe = subscribe(handleStoreChange);
+
         fetchLabels().then((transformedData) => {
-            setData(transformedData);
+            setLabels(transformedData.map(item => ({ ...item, isSelected: false })));
         });
+
+        return () => {
+            unsubscribe();
+        };
     }, []);
 
+    const handleUpdate = (updatedLabel: TableParentRow) => {
+        const currentData = getLabels();
+        const updatedData = currentData.map(row => {
+            if (row.idetiqueta === updatedLabel.idetiqueta) {
+                return { ...row, ...updatedLabel };
+            }
+            return row;
+        });
+        setLabels(updatedData);
+    };
+
+    const handleSelectionChange = (e: any) => {
+        const selectedFlatRows = e.detail.selectedFlatRows;
+        if (selectedFlatRows && selectedFlatRows.length > 0) {
+            const selectedRow = selectedFlatRows[0].original;
+            const updatedData = data.map(row => ({
+                ...row,
+                isSelected: row.idetiqueta === selectedRow.idetiqueta
+            }));
+            setLabels(updatedData);
+            setSelectedLabel(selectedRow);
+        } else {
+            const updatedData = data.map(row => ({
+                ...row,
+                isSelected: false
+            }));
+            setLabels(updatedData);
+            setSelectedLabel(null);
+        }
+    };
+
     return <>
-         
         <AnalyticalTable
         selectionMode={AnalyticalTableSelectionMode.Multiple}
         data={data}
         columns={columns}
         isTreeTable
-        tableHooks={tableHooks}
+        onRowSelect={handleSelectionChange}
         reactTableOptions={{ selectSubRows: true }}
+        withRowHighlight
+        highlightField="status"
+        tableHooks={tableHooks}
         />
     </>
 }

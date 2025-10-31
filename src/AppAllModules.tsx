@@ -13,10 +13,10 @@ export default function AppAllModules() {
                 {/*<h1>Main App - All Modules</h1>*/}
                 {/* <ToastContainer /> */}
                 <RouterProvider router={CatalogoRouter} />
-                <div id='div-footer'>
+                {/* <div id='div-footer'>
                     <Footer />
                 </div>
-                
+                 */}
             </div>
         </> 
     );

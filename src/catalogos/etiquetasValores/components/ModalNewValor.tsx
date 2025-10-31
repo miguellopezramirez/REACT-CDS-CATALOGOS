@@ -22,7 +22,7 @@ function ModalNewValor(){
                 </FlexBox>
         });
       }}>
-          Crear Nuevo Catalogo
+          Crear Nuevo Valor
         </Button>
       </>
         

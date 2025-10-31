@@ -1,6 +1,6 @@
 
 // src/catalogos/etiquetasValores/services/labelService.ts
-
+import { getLabels, setLabels, addOperation, getOperations, clearOperations, Operation } from '../store/labelStore';
 // Interfaces para la respuesta de la API
 export interface ApiDetailRowReg {
     CURRENT: boolean;
@@ -8,13 +8,11 @@ export interface ApiDetailRowReg {
     REGTIME: string;
     REGUSER: string;
 }
-
 export interface ApiDetailRow {
     ACTIVED: boolean;
     DELETED: boolean;
     DETAIL_ROW_REG: ApiDetailRowReg[];
 }
-
 export interface ApiValor {
     _id: string;
     IDSOCIEDAD: number;
@@ -33,7 +31,6 @@ export interface ApiValor {
     createdAt: string;
     updatedAt: string;
 }
-
 export interface ApiLabel {
     _id: string;
     IDSOCIEDAD: number;
@@ -52,7 +49,6 @@ export interface ApiLabel {
     DESCRIPCION: string;
     valores: ApiValor[];
 }
-
 // Interfaces para el formato de la tabla
 export interface TableSubRow {
     idsociedad: string;
@@ -66,12 +62,12 @@ export interface TableSubRow {
     imagen: string | null;
     ruta: string | null;
     descripcion: string;
+    status?: string;
     // Propiedades heredadas del padre
     indice: string;
     coleccion: string;
     seccion: string;
 }
-
 export interface TableParentRow {
     parent: true;
     idsociedad: string;
@@ -85,9 +81,9 @@ export interface TableParentRow {
     imagen: string;
     ruta: string;
     descripcion: string;
+    status?: string;
     subRows: TableSubRow[];
 }
-
 const transformData = (labels: ApiLabel[]): TableParentRow[] => {
     return labels.map((label) => {
         const subRows: TableSubRow[] = (label.valores || []).map((valor) => ({
@@ -107,11 +103,10 @@ const transformData = (labels: ApiLabel[]): TableParentRow[] => {
             coleccion: label.COLECCION || '',
             seccion: label.SECCION || '',
         }));
-
         return {
             parent: true,
-            idsociedad: label.IDSOCIEDAD ,
-            idcedi: label.IDCEDI,
+            idsociedad: label.IDSOCIEDAD.toString(),
+            idcedi: label.IDCEDI.toString(),
             idetiqueta: label.IDETIQUETA,
             etiqueta: label.ETIQUETA,
             indice: label.INDICE || '',
@@ -125,8 +120,11 @@ const transformData = (labels: ApiLabel[]): TableParentRow[] => {
         };
     });
 };
-
 export const fetchLabels = async (): Promise<TableParentRow[]> => {
+    const storedLabels = getLabels();
+    if (storedLabels.length > 0) {
+        return storedLabels;
+    }
     try {
         const response = await fetch('http://localhost:3034/api/cat/crudLabelsValues?ProcessType=GetAll&LoggedUser=MIGUELLOPEZ&DBServer=MongoDB', {
             method: 'POST',
@@ -134,20 +132,53 @@ export const fetchLabels = async (): Promise<TableParentRow[]> => {
                 'Content-Type': 'application/json',
             },
         });
-
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-
         console.log("Response:", response)
         const result = await response.json();
         // The initial JSON is an object with a 'data' property containing the array.
         console.log("result:", result.data[0]);
         const apiData: ApiLabel[] = result.data[0].dataRes || [];
+        const transformedData = transformData(apiData);
+        setLabels(transformedData);
         console.log("apiData:", apiData)
-        return transformData(apiData);
+        return transformedData;
     } catch (error) {
         console.error("Error fetching labels:", error);
         return []; // Return an empty array in case of an error
+    }
+};
+export const saveChanges = async () => {
+    const operations = getOperations();
+    if (operations.length === 0) {
+        return { success: true, message: 'No hay cambios que guardar.' };
+    }
+
+    try {
+        console.log("operations:", JSON.stringify(operations , null ,2))
+        const response = await fetch('http://localhost:3034/api/cat/crudLabelsValues?ProcessType=CRUD&LoggedUser=MIGUELLOPEZ&DBServer=MongoDB', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({operations:operations}),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        // Limpiar las operaciones pendientes después de guardarlas
+        clearOperations();
+        
+        // Forzar la recarga de los datos desde el servidor
+         console.error("Cambios guardados exitosamente.");
+        return { success: true, message: 'Cambios guardados exitosamente.', data: result };
+    } catch (error) {
+        console.error("Error saving changes:", error);
+        return { success: false, message: 'Error al guardar los cambios.' };
     }
 };

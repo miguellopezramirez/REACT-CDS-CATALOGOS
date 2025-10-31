@@ -1,7 +1,7 @@
 
 import { Button, MessageBoxType, } from '@ui5/webcomponents-react';
 import { Modals } from '@ui5/webcomponents-react/Modals';
-function ModalUpdateCatalogo(){
+function ModalDeleteCatalogo(){
     
     return <>
         <Button 
@@ -19,4 +19,4 @@ function ModalUpdateCatalogo(){
         
 }
 
-export default ModalUpdateCatalogo;
+export default ModalDeleteCatalogo;
