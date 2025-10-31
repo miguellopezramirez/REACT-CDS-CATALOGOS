@@ -9,6 +9,9 @@ import Shippings from "../catalogos/shippings/pages/Shippings";
 import Inventories from "../catalogos/inventories/pages/Inventories";
 //FIC: Share 
 import Error from "../share/errors/pages/Error.js";
+import CommerceAppBar from "../share/components/CommerceAppBar.jsx";
+
+
 const router = createBrowserRouter([
     {
       path: "/",
@@ -16,34 +19,38 @@ const router = createBrowserRouter([
       errorElement: <Error />,
       children: [
         {
-          path: "/products",
+          index: true,
+          element: <h2>Home Page - eCommerce Project</h2>,
+        },
+        {
+          path: "products",
           element: <Products />,
         },
         {
-            path: "/Catalogos",
+            path: "catalogos",
             element: <Catalogos />,
         },
         {
-          path: "/prices",
+          path: "prices",
           element: <Prices />,
         },
         {
-            path: "/orders",
+            path: "orders",
             element: <Orders />,
         },
         {
-            path: "/payments",
+            path: "payments",
             element: <Payments />,
         },
         {
-            path: "/shippings",
+            path: "shippings",
             element: <Shippings />,
         },
         {
-            path: "/inventories",
+            path: "inventories",
             element: <Inventories />,
         },
-      ], 
+      ],
     },
   ]);
   export default router;

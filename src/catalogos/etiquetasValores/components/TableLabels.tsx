@@ -1,7 +1,7 @@
 // TableLables.tsx
 import { useEffect, useState } from 'react';
 import { useIndeterminateRowSelection } from '@ui5/webcomponents-react/AnalyticalTableHooks';
-import { Title } from '@ui5/webcomponents-react/Title';
+
 import { AnalyticalTable, AnalyticalTableSelectionMode } from '@ui5/webcomponents-react';
 import { fetchLabels, TableParentRow } from '../services/labelService';
 
@@ -75,9 +75,7 @@ function TableLabels(){
     }, []);
 
     return <>
-         <Title level="H1">
-            Etiquetas
-        </Title>
+         
         <AnalyticalTable
         selectionMode={AnalyticalTableSelectionMode.Multiple}
         data={data}

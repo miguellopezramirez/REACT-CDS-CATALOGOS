@@ -1,204 +1,185 @@
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import Menu from '@mui/material/Menu';
-import MenuIcon from '@mui/icons-material/Menu';
-import Container from '@mui/material/Container';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
-import MenuItem from '@mui/material/MenuItem';
-import AdbIcon from '@mui/icons-material/Adb';
-//FIC: Add
-import { useState, useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
-const pages = ['Productos', 'Precios', 'Ordenes', 'Pagos', 'Envios','Inventarios'];
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
-function ResponsiveAppBar() {
-/* const ResponsiveAppBar=() => { */
-  const [anchorElNav, setAnchorElNav] = useState(null);
-  const [anchorElUser, setAnchorElUser] = useState(null);
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
-  };
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
-  //+++++++++++++++++++++++++++++++++
-  //FIC: le agregamos el objeto e que se
-  //envia al hacer click en opcion del menu.  
-  const handleCloseNavMenu = (e) => {
-    console.log(e.target.innerText);
-    //FIC: llamar funcion enviando e
-    handleClickNavMenu(e);
-    setAnchorElNav(null);
-  };
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
-    //+++++++++++++++++++++++++++++++++++++++++++++++
-    //FIC: Guardar el Estado de la Pagina Actual
-    const [myPages, setMyPages]= useState("");
-    //FIC: Clonar el objeto de navegacion (history).
-    const navigate = useNavigate();
-    //FIC: Actualizar el estado del useState de Paginas.
-    //cambiamos la opcion clickeada a mayusculas.
-    function handleClickNavMenu(e){
-        //console.log(e.target.innerText.toUpperCase());
-        setMyPages(e.target.innerText.toUpperCase());
+import { useState, useRef } from 'react';
+import { useNavigate, Outlet } from 'react-router-dom';
+import {
+  SideNavigation,
+  SideNavigationItem,
+  NavigationLayout,
+  ShellBar,
+  Button,
+  Avatar,
+  UserMenu,
+  UserMenuItem,
+  UserMenuAccount,
+} from '@ui5/webcomponents-react';
+import '@ui5/webcomponents-icons/dist/AllIcons.js';
+
+const CommerceAppBar = () => {
+  const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(true);
+  const userMenuRef = useRef(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const handleSelectionChange = (event) => {
+    const selectedKey = event.detail.item.dataset.key;
+    switch (selectedKey) {
+      case 'home':
+        navigate('/');
+        break;
+      case 'products':
+        navigate('/products');
+        break;
+      case 'prices':
+        navigate('/prices');
+        break;
+      case 'catalogos':
+        navigate('/catalogos');
+        break;
+      case 'orders':
+        navigate('/orders');
+        break;
+      case 'payments':
+        navigate('/payments');
+        break;
+      case 'shippings':
+        navigate('/shippings');
+        break;
+      case 'inventories':
+        navigate('/inventories');
+        break;
+      default:
+        break;
     }
-  
-    //FIC: useEffect
-    useEffect(() => {
-        switch (myPages) {
-            case "":
-                navigate("/");
-                //console.log("entro a home");
-                break;
-            case "PRODUCTOS":
-                navigate("/products");
-                break;
-            case "PRECIOS":
-                navigate("/prices");
-                break;
-            case "ORDENES":
-                navigate("/orders");
-                break;
-            case "PAGOS":
-                navigate("/payments");
-                break;
-            case "ENVIOS":
-                navigate("/shippings");
-                break;
-            case "INVENTARIOS":
-                navigate("/inventories");
-                break;
-        }
-    }, [myPages]); 
-    //-----------------------------------------------
+  };
+
+  const handleProfileClick = (e) => {
+    userMenuRef.current.showAt(e.detail.targetRef);
+    setUserMenuOpen(true);
+  };
+
   return (
-    <AppBar position="static">
-      <Container maxWidth="xl">
-        <Toolbar disableGutters>
-          <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
-          <Typography
-            variant="h6"
-            noWrap
-            component="a"
-            href="/"
-            sx={{
-              mr: 2,
-              display: { xs: 'none', md: 'flex' },
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
+    <div
+      style={{
+        height: '100vh',
+        position: 'relative',
+      }}
+    >
+      <NavigationLayout
+        header={
+          <>
+            <ShellBar
+              primaryTitle="Aplicación"
+              secondaryTitle="Sap React"
+              startButton={
+                <Button
+                  icon="menu"
+                  onClick={() => setCollapsed(!collapsed)}
+                />
+              }
+              profile={
+                <Avatar>
+                  <img
+                    alt="Avatar of the current user"
+                    src="https://ui5.github.io/webcomponents/images/avatars/woman_avatar_3.png"
+                  />
+                </Avatar>
+              }
+              onProfileClick={handleProfileClick}
+            />
+            <UserMenu
+              ref={userMenuRef}
+              open={userMenuOpen}
+              onClose={() => setUserMenuOpen(false)}
+            >
+              <UserMenuAccount
+                avatarSrc="https://ui5.github.io/webcomponents/images/avatars/woman_avatar_3.png"
+                description="Delivery Manager, SAP SE"
+                selected
+                subtitleText="aliana.chevalier@sap.com"
+                titleText="Alaina Chevalier"
+              />
+              <UserMenuItem
+                data-id="setting"
+                icon="action-settings"
+                text="Setting"
+              />
+              <UserMenuItem
+                data-id="account-action1"
+                icon="globe"
+                text="Product-specific account action"
+              />
+              <UserMenuItem icon="official-service" text="Legal Information">
+                <UserMenuItem
+                  data-id="privacy-policy"
+                  icon="private"
+                  text="Private Policy"
+                />
+                <UserMenuItem
+                  data-id="terms-of-use"
+                  icon="accelerated"
+                  text="Terms of Use"
+                />
+              </UserMenuItem>
+            </UserMenu>
+          </>
+        }
+        sideContent={
+          <SideNavigation
+            collapsed={collapsed}
+            onSelectionChange={handleSelectionChange}
           >
-            LOGO
-          </Typography>
-          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-            <IconButton
-              size="large"
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleOpenNavMenu}
-              color="inherit"
-            >
-              <MenuIcon />
-            </IconButton>
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorElNav}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'left',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'left',
-              }}
-              open={Boolean(anchorElNav)}
-              onClose={handleCloseNavMenu}
-              sx={{
-                display: { xs: 'block', md: 'none' },
-              }}
-            >
-              {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">{page}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
-          <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
-          <Typography
-            variant="h5"
-            noWrap
-            component="a"
-            href=""
-            sx={{
-              mr: 2,
-              display: { xs: 'flex', md: 'none' },
-              flexGrow: 1,
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
-          >
-            LOGO
-          </Typography>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {pages.map((page) => (
-              <Button
-                key={page}
-                /* onClick={handleCloseNavMenu} */
-                onClick={handleCloseNavMenu}
-                sx={{ my: 2, color: 'white', display: 'block' }}
-              >
-                {page}
-              </Button>
-            ))}
-          </Box>
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/files/images/userDefault.svg" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography textAlign="center">{setting}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
-        </Toolbar>
-      </Container>
-    </AppBar>
+            <SideNavigationItem
+              text="Home"
+              icon="home"
+              data-key="home"
+            />
+            <SideNavigationItem
+              text="Productos"
+              icon="product"
+              data-key="products"
+            />
+            <SideNavigationItem
+              text="Precios"
+              icon="product"
+              data-key="prices"
+            />
+            <SideNavigationItem
+              text="Catalogos"
+              icon="payment-approval"
+              data-key="catalogos"
+            />
+            <SideNavigationItem
+              text="Ordenes"
+              icon="order-status"
+              data-key="orders"
+            />
+            <SideNavigationItem
+              text="Pagos"
+              icon="payment-approval"
+              data-key="payments"
+            />
+            <SideNavigationItem
+              text="Envios"
+              icon="shipping-status"
+              data-key="shippings"
+            />
+            <SideNavigationItem
+              text="Inventarios"
+              icon="inventory"
+              data-key="inventories"
+            />
+          </SideNavigation>
+        }
+      >
+        <div
+          style={{
+            padding: '1rem',
+          }}
+        >
+          <Outlet />
+        </div>
+      </NavigationLayout>
+    </div>
   );
-}
-export default ResponsiveAppBar;
+};
+
+export default CommerceAppBar;

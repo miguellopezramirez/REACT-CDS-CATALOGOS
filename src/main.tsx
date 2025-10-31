@@ -4,14 +4,15 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './share/css/allPages.css';
 import AppAllModules from './AppAllModules';
-import TableLabels from './catalogos/etiquetasValores/pages/TableLabels';
+import { Modals } from '@ui5/webcomponents-react/Modals';
 import './index.css';
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
     <ThemeProvider>
+      <Modals />
       <AppAllModules />
-      {/* <TableLabels /> */}
+
     </ThemeProvider>
   </StrictMode>,
 );
