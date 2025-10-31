@@ -5,6 +5,7 @@ import ModalNewCatalogo from "../components/ModalNewCatalogo";
 import ModalNewValor from "../components/ModalNewValor";
 import ModalDeleteCatalogo from "../components/ModalDeleteCatalogo";
 import ModalSaveChanges from "../components/ModalSaveChanges";
+import ModalUpdateCatalogo from "../components/ModalUpdateCatalogo";
 import { fetchLabels } from '../services/labelService';
 import { setLabels } from '../store/labelStore';
 import { MessageStrip } from '@ui5/webcomponents-react';
@@ -36,6 +37,7 @@ export default function Catalogos() {
         <ModalNewCatalogo/>
         <ModalNewValor/>
         <ModalDeleteCatalogo/>
+        <ModalUpdateCatalogo/>
         <ModalSaveChanges onSave={handleSave} />
         {saveMessage && <MessageStrip design="Positive" style={{ marginBottom: '1rem' }}>{saveMessage}</MessageStrip>}
         <TableLabels />
