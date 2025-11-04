@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import {
   SideNavigation,
@@ -16,8 +16,28 @@ import '@ui5/webcomponents-icons/dist/AllIcons.js';
 const CommerceAppBar = () => {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(true);
-  const userMenuRef = useRef(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const avatarRef = useRef(null);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        userMenuOpen &&
+        avatarRef.current &&
+        userMenuRef.current &&
+        !avatarRef.current.contains(event.target) &&
+        !userMenuRef.current.contains(event.target)
+      ) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [userMenuOpen]);
 
   const handleSelectionChange = (event) => {
     const selectedKey = event.detail.item.dataset.key;
@@ -51,32 +71,21 @@ const CommerceAppBar = () => {
     }
   };
 
-  const handleProfileClick = (e) => {
-    userMenuRef.current.showAt(e.detail.targetRef);
-    setUserMenuOpen(true);
+  const handleProfileClick = () => {
+    setUserMenuOpen((prev) => !prev);
   };
 
   return (
-    <div
-      style={{
-        height: '100vh',
-        position: 'relative',
-      }}
-    >
+    <div style={{ height: '100vh', position: 'relative' }}>
       <NavigationLayout
         header={
           <>
             <ShellBar
               primaryTitle="Aplicación"
-              secondaryTitle="Sap React"
-              startButton={
-                <Button
-                  icon="menu"
-                  onClick={() => setCollapsed(!collapsed)}
-                />
-              }
+              secondaryTitle="SAP React"
+              startButton={<Button icon="menu" onClick={() => setCollapsed(!collapsed)} />}
               profile={
-                <Avatar>
+                <Avatar ref={avatarRef}>
                   <img
                     alt="Avatar of the current user"
                     src="https://ui5.github.io/webcomponents/images/avatars/woman_avatar_3.png"
@@ -85,96 +94,43 @@ const CommerceAppBar = () => {
               }
               onProfileClick={handleProfileClick}
             />
-            <UserMenu
-              ref={userMenuRef}
-              open={userMenuOpen}
-              onClose={() => setUserMenuOpen(false)}
-            >
-              <UserMenuAccount
-                avatarSrc="https://ui5.github.io/webcomponents/images/avatars/woman_avatar_3.png"
-                description="Delivery Manager, SAP SE"
-                selected
-                subtitleText="aliana.chevalier@sap.com"
-                titleText="Alaina Chevalier"
-              />
-              <UserMenuItem
-                data-id="setting"
-                icon="action-settings"
-                text="Setting"
-              />
-              <UserMenuItem
-                data-id="account-action1"
-                icon="globe"
-                text="Product-specific account action"
-              />
-              <UserMenuItem icon="official-service" text="Legal Information">
-                <UserMenuItem
-                  data-id="privacy-policy"
-                  icon="private"
-                  text="Private Policy"
+
+            <div ref={userMenuRef}>
+              <UserMenu
+                opener={avatarRef.current}
+                open={userMenuOpen}
+              >
+                <UserMenuAccount
+                  avatarSrc="https://ui5.github.io/webcomponents/images/avatars/woman_avatar_3.png"
+                  description="Delivery Manager, SAP SE"
+                  selected
+                  subtitleText="aliana.chevalier@sap.com"
+                  titleText="Alaina Chevalier"
                 />
-                <UserMenuItem
-                  data-id="terms-of-use"
-                  icon="accelerated"
-                  text="Terms of Use"
-                />
-              </UserMenuItem>
-            </UserMenu>
+                <UserMenuItem data-id="setting" icon="action-settings" text="Setting" />
+                <UserMenuItem data-id="account-action1" icon="globe" text="Product-specific account action" />
+                <UserMenuItem icon="official-service" text="Legal Information">
+                  <UserMenuItem data-id="privacy-policy" icon="private" text="Private Policy" />
+                  <UserMenuItem data-id="terms-of-use" icon="accelerated" text="Terms of Use" />
+                </UserMenuItem>
+              </UserMenu>
+            </div>
           </>
         }
         sideContent={
-          <SideNavigation
-            collapsed={collapsed}
-            onSelectionChange={handleSelectionChange}
-          >
-            <SideNavigationItem
-              text="Home"
-              icon="home"
-              data-key="home"
-            />
-            <SideNavigationItem
-              text="Productos"
-              icon="product"
-              data-key="products"
-            />
-            <SideNavigationItem
-              text="Precios"
-              icon="product"
-              data-key="prices"
-            />
-            <SideNavigationItem
-              text="Catalogos"
-              icon="payment-approval"
-              data-key="catalogos"
-            />
-            <SideNavigationItem
-              text="Ordenes"
-              icon="order-status"
-              data-key="orders"
-            />
-            <SideNavigationItem
-              text="Pagos"
-              icon="payment-approval"
-              data-key="payments"
-            />
-            <SideNavigationItem
-              text="Envios"
-              icon="shipping-status"
-              data-key="shippings"
-            />
-            <SideNavigationItem
-              text="Inventarios"
-              icon="inventory"
-              data-key="inventories"
-            />
+          <SideNavigation collapsed={collapsed} onSelectionChange={handleSelectionChange}>
+            <SideNavigationItem text="Home" icon="home" data-key="home" />
+            <SideNavigationItem text="Productos" icon="product" data-key="products" />
+            <SideNavigationItem text="Precios" icon="product" data-key="prices" />
+            <SideNavigationItem text="Catalogos" icon="payment-approval" data-key="catalogos" />
+            <SideNavigationItem text="Ordenes" icon="order-status" data-key="orders" />
+            <SideNavigationItem text="Pagos" icon="payment-approval" data-key="payments" />
+            <SideNavigationItem text="Envios" icon="shipping-status" data-key="shippings" />
+            <SideNavigationItem text="Inventarios" icon="inventory" data-key="inventories" />
           </SideNavigation>
         }
       >
-        <div
-          style={{
-            padding: '1rem',
-          }}
-        >
+        <div style={{ padding: '1rem' }}>
           <Outlet />
         </div>
       </NavigationLayout>
