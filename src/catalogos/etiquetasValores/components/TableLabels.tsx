@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom'; 
 import { AnalyticalTable, AnalyticalTableHooks, AnalyticalTableSelectionMode, Button } from '@ui5/webcomponents-react';
 import { fetchLabels, TableParentRow } from '../services/labelService';
-import { subscribe, getLabels, setLabels } from '../store/labelStore';
+import { subscribe, getLabels, setLabels, addOperation } from '../store/labelStore';
 
 
 // Componente para la celda de descripción que usa un Portal para el popover flotante
@@ -149,10 +149,13 @@ const columns = [
   }
 ];
 
-function TableLabels(){
+interface TableLabelsProps {
+    onSelectionChange?: (label: TableParentRow | null) => void;
+}
+
+function TableLabels({ onSelectionChange }: TableLabelsProps){
     const [data, setData] = useState<TableParentRow[]>([]);
-    const [selectedLabel, setSelectedLabel] = useState<TableParentRow | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    // Component state managed by parent
 
     useEffect(() => {
         const handleStoreChange = () => {
@@ -170,34 +173,67 @@ function TableLabels(){
         };
     }, []);
 
-    const handleUpdate = (updatedLabel: TableParentRow) => {
-        const currentData = getLabels();
-        const updatedData = currentData.map(row => {
-            if (row.idetiqueta === updatedLabel.idetiqueta) {
-                return { ...row, ...updatedLabel };
-            }
-            return row;
-        });
-        setLabels(updatedData);
-    };
+    // Component updates are managed by store
 
-    const handleSelectionChange = (e: any) => {
-        const selectedFlatRows = e.detail.selectedFlatRows;
-        if (selectedFlatRows && selectedFlatRows.length > 0) {
-            const selectedRow = selectedFlatRows[0].original;
+    const handleSelectionChange = (e?: CustomEvent<any>) => {
+        console.log('handleSelectionChange called with:', e?.detail);
+        
+        if (e?.detail?.row?.original && onSelectionChange) {
+            const selectedRow = e.detail.row.original;
+            console.log('Seleccionando etiqueta:', selectedRow);
+            onSelectionChange(selectedRow);
+            
+            // Marcar la fila como seleccionada y con status de modificación pendiente
             const updatedData = data.map(row => ({
                 ...row,
-                isSelected: row.idetiqueta === selectedRow.idetiqueta
+                isSelected: row.idetiqueta === selectedRow.idetiqueta,
+                status: row.idetiqueta === selectedRow.idetiqueta ? 'Warning' : row.status
             }));
+            
+            // Sanitize: quitar campos cliente que el backend no espera
+            const sanitizePayload = (obj: any) => {
+                if (!obj) return obj;
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { parent, isSelected, status, subRows, ...rest } = obj;
+                
+                // CAMBIO: Mapear a la estructura { id, updates }
+                return {
+                    id: rest.idetiqueta, // El ID va afuera
+                    updates: { // El objeto de actualizaciones
+                        IDSOCIEDAD: Number(rest.idsociedad) || 0,
+                        IDCEDI: Number(rest.idcedi) || 0,
+                        ETIQUETA: rest.etiqueta,
+                        INDICE: rest.indice,
+                        COLECCION: rest.coleccion,
+                        SECCION: rest.seccion,
+                        SECUENCIA: Number(rest.secuencia) || 0,
+                        IMAGEN: rest.imagen,
+                        ROUTE: rest.ruta,
+                        DESCRIPCION: rest.descripcion
+                    }
+                };
+            };
+            
+            const cleanPayload = sanitizePayload(selectedRow);
+            
+            // Agregar la operación al store con payload limpio
+            addOperation({
+                collection: 'labels',
+                action: 'UPDATE',
+                payload: cleanPayload
+            });
+            
             setLabels(updatedData);
-            setSelectedLabel(selectedRow);
         } else {
+            console.log('Limpiando selección');
+            onSelectionChange?.(null);
+            
+            // Limpiar la selección
             const updatedData = data.map(row => ({
                 ...row,
                 isSelected: false
             }));
             setLabels(updatedData);
-            setSelectedLabel(null);
         }
     };
 
@@ -207,8 +243,11 @@ function TableLabels(){
         data={data}
         columns={columns}
         isTreeTable
-        onRowSelect={handleSelectionChange}
-        reactTableOptions={{ selectSubRows: true }}
+        onRowSelect={(e) => {
+            console.log('Selección cambiada:', e?.detail);
+            handleSelectionChange(e);
+        }}
+        reactTableOptions={{ selectSubRows: false }}
         withRowHighlight
         highlightField="status"
         tableHooks={tableHooks}

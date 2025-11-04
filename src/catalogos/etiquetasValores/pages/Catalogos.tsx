@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import TableLabels from "../components/TableLabels";
-import { Title } from '@ui5/webcomponents-react';
+import { Title, Toolbar, ToolbarSpacer } from '@ui5/webcomponents-react';
 import ModalNewCatalogo from "../components/ModalNewCatalogo";
 import ModalNewValor from "../components/ModalNewValor";
 import ModalDeleteCatalogo from "../components/ModalDeleteCatalogo";
 import ModalSaveChanges from "../components/ModalSaveChanges";
 import ModalUpdateCatalogo from "../components/ModalUpdateCatalogo";
-import { fetchLabels } from '../services/labelService';
+import { fetchLabels, TableParentRow } from '../services/labelService';
 import { setLabels } from '../store/labelStore';
 import { MessageStrip } from '@ui5/webcomponents-react';
 
 export default function Catalogos() {
     const [saveMessage, setSaveMessage] = useState('');
+    const [selectedLabel, setSelectedLabel] = useState<TableParentRow | null>(null);
 
     useEffect(() => {
         fetchLabels().then((transformedData) => {
@@ -31,16 +32,26 @@ export default function Catalogos() {
         <Title 
           level="H1" 
           size="H2"
+          style={{ marginBottom: '1rem' }}
         >
             Catalagos y Valores
         </Title>
-        <ModalNewCatalogo/>
-        <ModalNewValor/>
-        <ModalDeleteCatalogo/>
-        <ModalUpdateCatalogo/>
-        <ModalSaveChanges onSave={handleSave} />
+        <Toolbar 
+          style={{ 
+            padding: '0.5rem', 
+            gap: '0.5rem',
+            marginBottom: '1rem'
+          }}
+        >
+          <ModalNewCatalogo/>
+          <ModalNewValor/>
+          <ModalDeleteCatalogo/>
+          <ModalUpdateCatalogo label={selectedLabel}/>
+          <ToolbarSpacer />
+          <ModalSaveChanges onSave={handleSave} />
+        </Toolbar>
         {saveMessage && <MessageStrip design="Positive" style={{ marginBottom: '1rem' }}>{saveMessage}</MessageStrip>}
-        <TableLabels />
+        <TableLabels onSelectionChange={setSelectedLabel} />
       </div>
     );
   }
