@@ -33,7 +33,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          # ESTE ES EL CAMBIO IMPORTANTE:
+          # Solo subimos los archivos necesarios para producción.
+          # NO incluimos node_modules.
+          path: |
+            dist
+            package.json
+            package-lock.json
 
   deploy:
     runs-on: ubuntu-latest
@@ -44,7 +50,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+          
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
