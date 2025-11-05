@@ -1,5 +1,4 @@
 import { Button, FlexBox, FlexBoxJustifyContent, Form, FormGroup, FormItem, Input, Label, Modals } from '@ui5/webcomponents-react';
-// <-- CAMBIO: Importa useRef
 import { useState, useRef } from 'react';
 import { addOperation } from '../store/labelStore';
 
@@ -20,15 +19,10 @@ const initialFormState = {
 function ModalNewCatalogo() {
     const [formData, setFormData] = useState(initialFormState);
     const [errors, setErrors] = useState<any>({});
-    
-    // <-- CAMBIO: Crea una ref para guardar el estado síncronamente
     const latestFormRef = useRef(initialFormState);
 
-    // <-- CAMBIO: 'validate' ahora acepta los datos como parámetro
-    // Ya no depende del estado 'formData'
     const validate = (data: typeof initialFormState) => {
         const newErrors: any = {};
-        // <-- CAMBIO: Lee de 'data', no de 'formData'
         if (!data.IDETIQUETA) newErrors.IDETIQUETA = 'IDETIQUETA es requerido.';
         if (!data.ETIQUETA) newErrors.ETIQUETA = 'ETIQUETA es requerido.';
         if (!data.INDICE) newErrors.INDICE = 'INDICE es requerido.';
@@ -66,7 +60,6 @@ function ModalNewCatalogo() {
                 [name]: converted
             };
 
-            // <-- CAMBIO: Actualiza la ref síncronamente
             latestFormRef.current = updatedState;
             
             return updatedState;
@@ -75,18 +68,15 @@ function ModalNewCatalogo() {
 
     const handleSubmit = async (close: () => void) => {
         console.log("handleSubmit called");
-        
-        // <-- CAMBIO: Lee los datos más actuales desde la ref
         const snapshot = { ...(latestFormRef.current || formData) };
 
-        // <-- CAMBIO: Pasa el snapshot a la validación
         if (validate(snapshot)) {
             try {
                 console.log("Validation passed. Calling addOperation with:", snapshot);
-                await addOperation({
+                addOperation({
                     collection: 'labels',
                     action: 'CREATE',
-                    payload: { // Usa el snapshot para el payload
+                    payload: { 
                         ...snapshot,
                         IDSOCIEDAD: Number(snapshot.IDSOCIEDAD) || 0,
                         IDCEDI: Number(snapshot.IDCEDI) || 0,
@@ -108,14 +98,12 @@ function ModalNewCatalogo() {
             design="Positive"
             icon="add"
             onClick={() => {
-                // Resetea el estado Y la ref
                 setFormData(initialFormState);
-                latestFormRef.current = initialFormState; // <-- CAMBIO
+                latestFormRef.current = initialFormState; 
                 setErrors({});
 
                 const { close } = Modals.showDialog({
                     headerText: 'Agrega un Catalogo',
-                    // El resto del JSX del formulario no cambia...
                     children: <Form>
                         <FormGroup headerText='Informacion del Catalogo'>
                             <FormItem labelContent={<Label required>ID de la etiqueta</Label>}>
