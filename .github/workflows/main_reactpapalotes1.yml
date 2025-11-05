@@ -60,6 +60,6 @@ jobs:
           app-name: 'reactpapalotes1'
           slot-name: 'Production'
           # CORREGIDO: Apunta a la carpeta 'dist' descargada
-          package: 'dist'
+          package: .
           # CORREGIDO: Se quitó el '*' al final del secret
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_9A5888BB8EF44059BC32399BC1A887FC }}
