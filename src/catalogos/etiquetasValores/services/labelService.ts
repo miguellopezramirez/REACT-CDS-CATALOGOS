@@ -1,6 +1,6 @@
 
 // src/catalogos/etiquetasValores/services/labelService.ts
-import { getLabels, setLabels, addOperation, getOperations, clearOperations, Operation } from '../store/labelStore';
+import { getLabels, setLabels, getOperations, clearOperations } from '../store/labelStore';
 // Interfaces para la respuesta de la API
 export interface ApiDetailRowReg {
     CURRENT: boolean;

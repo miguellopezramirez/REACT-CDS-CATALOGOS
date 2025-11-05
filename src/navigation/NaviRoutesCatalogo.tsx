@@ -9,8 +9,6 @@ import Shippings from "../catalogos/shippings/pages/Shippings";
 import Inventories from "../catalogos/inventories/pages/Inventories";
 //FIC: Share 
 import Error from "../share/errors/pages/Error.js";
-import CommerceAppBar from "../share/components/CommerceAppBar.jsx";
-
 
 const router = createBrowserRouter([
     {

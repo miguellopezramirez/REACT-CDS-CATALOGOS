@@ -10,6 +10,7 @@ import {
   UserMenu,
   UserMenuItem,
   UserMenuAccount,
+  AvatarDomRef,
 } from '@ui5/webcomponents-react';
 import '@ui5/webcomponents-icons/dist/AllIcons.js';
 
@@ -17,17 +18,17 @@ const CommerceAppBar = () => {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const avatarRef = useRef(null);
-  const userMenuRef = useRef(null);
+  const avatarRef = useRef<AvatarDomRef>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       if (
         userMenuOpen &&
         avatarRef.current &&
         userMenuRef.current &&
-        !avatarRef.current.contains(event.target) &&
-        !userMenuRef.current.contains(event.target)
+        !avatarRef.current.contains(event.target as Node) &&
+        !userMenuRef.current.contains(event.target as Node)
       ) {
         setUserMenuOpen(false);
       }
@@ -39,7 +40,7 @@ const CommerceAppBar = () => {
     };
   }, [userMenuOpen]);
 
-  const handleSelectionChange = (event) => {
+  const handleSelectionChange = (event: CustomEvent<{ item: HTMLElement }>) => {
     const selectedKey = event.detail.item.dataset.key;
     switch (selectedKey) {
       case 'home':
@@ -85,7 +86,7 @@ const CommerceAppBar = () => {
               secondaryTitle="SAP React"
               startButton={<Button icon="menu" onClick={() => setCollapsed(!collapsed)} />}
               profile={
-                <Avatar ref={avatarRef}>
+                <Avatar ref={avatarRef} id="avatar">
                   <img
                     alt="Avatar of the current user"
                     src="https://ui5.github.io/webcomponents/images/avatars/woman_avatar_3.png"
@@ -97,7 +98,7 @@ const CommerceAppBar = () => {
 
             <div ref={userMenuRef}>
               <UserMenu
-                opener={avatarRef.current}
+                opener="avatar"
                 open={userMenuOpen}
               >
                 <UserMenuAccount

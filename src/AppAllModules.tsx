@@ -1,7 +1,5 @@
 import { RouterProvider } from "react-router-dom";
 import  CatalogoRouter from "./navigation/NaviRoutesCatalogo";
-import Footer from "./share/footer/components/Footer";
-
 
 
 export default function AppAllModules() {

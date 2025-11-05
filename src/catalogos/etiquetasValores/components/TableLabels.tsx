@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 // Importación necesaria para mover el popover fuera de la jerarquía de la tabla
 import { createPortal } from 'react-dom'; 
-import { AnalyticalTable, AnalyticalTableHooks, AnalyticalTableSelectionMode, Button } from '@ui5/webcomponents-react';
+import { AnalyticalTable, AnalyticalTableHooks, AnalyticalTableSelectionMode } from '@ui5/webcomponents-react';
 import { fetchLabels, TableParentRow } from '../services/labelService';
 import { subscribe, getLabels, setLabels, addOperation } from '../store/labelStore';
 
