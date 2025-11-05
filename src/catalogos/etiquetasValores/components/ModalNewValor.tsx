@@ -198,7 +198,10 @@ function ModalNewValor() {
         <Form>
           <FormGroup headerText="Información del Catálogo">
             <FormItem labelContent={<Label required>Etiqueta Padre</Label>}>
-              <ComboBox onSelectionChange={handleParentChange}>
+              <ComboBox 
+                onSelectionChange={handleParentChange}
+                value={selectedParentData?.etiqueta || ""}
+              >
                 {parentLabels.map((label) => (
                   <ComboBoxItem
                     key={label.idetiqueta}

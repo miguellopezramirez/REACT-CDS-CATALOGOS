@@ -103,6 +103,9 @@ export const addOperation = (operation: Operation) => {
             idsociedad: operation.payload.IDSOCIEDAD.toString(),
             idcedi: operation.payload.IDCEDI.toString(),
             idetiqueta: operation.payload.IDETIQUETA,
+            indice: label.indice,
+            coleccion: label.coleccion,
+            seccion: label.seccion,
 
             idvalor: operation.payload.IDVALOR,
             valor: operation.payload.VALOR,
