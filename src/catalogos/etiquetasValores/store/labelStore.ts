@@ -1,6 +1,6 @@
 
 // src/catalogos/etiquetasValores/store/labelStore.ts
-import { TableParentRow } from "../services/labelService";
+import { TableParentRow, TableSubRow } from "../services/labelService";
 
 export type Action = 'CREATE' | 'UPDATE' | 'DELETE';
 
@@ -56,12 +56,10 @@ export const addOperation = (operation: Operation) => {
       };
       labels = [...labels, newLabel];
     } else if (operation.collection === 'labels' && operation.action === 'UPDATE') {
-  console.log('Iniciando operación UPDATE');
       console.log('Iniciando operación UPDATE');
-      // CAMBIO: El payload ahora es { id, updates }
       const targetId = operation.payload.id; 
-      const updates = operation.payload.updates; // Objeto con mayúsculas
-  console.log('Buscando etiqueta con ID:', targetId);
+      const updates = operation.payload.updates; 
+      console.log('Buscando etiqueta con ID:', targetId);
       
       labels = labels.map(label => {
         if (label.idetiqueta === targetId) {
@@ -92,6 +90,44 @@ export const addOperation = (operation: Operation) => {
         return label;
       });
       
+    } else if (operation.collection === 'values' && operation.action === 'CREATE') {
+      console.log('Iniciando operación CREATE para un Valor');
+      const parentId = operation.payload.IDETIQUETA;
+
+      labels = labels.map(label => {
+        if (label.idetiqueta === parentId && label.parent) {
+          console.log('Encontrado padre:', label.idetiqueta);
+
+          const newSubRow = {
+            parent: false,
+            idsociedad: operation.payload.IDSOCIEDAD.toString(),
+            idcedi: operation.payload.IDCEDI.toString(),
+            idetiqueta: operation.payload.IDETIQUETA,
+            indice: label.indice,
+            coleccion: label.coleccion,
+            seccion: label.seccion,
+
+            idvalor: operation.payload.IDVALOR,
+            valor: operation.payload.VALOR,
+            idvalorpa: operation.payload.IDVALORPA,
+            alias: operation.payload.ALIAS,
+            idvalorsap: operation.payload.IDVALORSAP,
+
+            secuencia: operation.payload.SECUENCIA,
+            imagen: operation.payload.IMAGEN,
+            ruta: operation.payload.ROUTE,
+            descripcion: operation.payload.DESCRIPCION,
+
+            status: 'Positive', 
+          };
+
+          return {
+            ...label,
+            subRows: [...label.subRows, newSubRow] as TableSubRow[]
+          };
+        }
+        return label;
+      });
     }
     
     notifyListeners();
