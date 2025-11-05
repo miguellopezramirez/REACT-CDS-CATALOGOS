@@ -59,7 +59,3 @@ jobs:
           slot-name: 'Production'
           package: .
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_9A5888BB8EF44059BC32399BC1A887FC }}
-          # --- ESTA ES LA LÍNEA NUEVA ---
-          # Le decimos a Azure qué comando ejecutar después de instalar las dependencias.
-          # Esto es más robusto que usar "npx".
-          startup-command: 'serve -s dist'
