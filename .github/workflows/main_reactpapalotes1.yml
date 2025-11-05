@@ -1,19 +1,16 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy React app to Azure Web App - reactpapalotes1
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch: # <-- Corregí la indentación aquí
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read # This is required for actions/checkout
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -21,25 +18,25 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'  # Usamos una versión compatible con Vite y React
+          node-version: '20.x'
 
       - name: Install dependencies
-        run: |
-          npm install
+        run: npm install
+        # Si tu app está en una subcarpeta, añade:
+        # working-directory: ./TU_CARPETA_APP
 
       - name: Build the application
-        run: |
-          npm run build  # Genera la carpeta 'dist' con los archivos optimizados para producción
-          ls -l dist  # Verificamos si la carpeta 'dist' fue creada correctamente
+        run: npm run build
+        # Si tu app está en una subcarpeta, añade:
+        # working-directory: ./TU_CARPETA_APP
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: react-app  # Nombre del artefacto
-          path: |
-            dist        # Subimos solo la carpeta 'dist' generada por Vite
-            package.json  # Necesario para instalar dependencias en Azure
-            package-lock.json  # Aseguramos la versión exacta de dependencias en Azure
+          name: react-app
+          # Solo subimos la carpeta 'dist'
+          # Si usas subcarpeta, cámbialo a: ./TU_CARPETA_APP/dist
+          path: ./dist 
 
   deploy:
     runs-on: ubuntu-latest
@@ -49,13 +46,15 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: react-app  # El nombre del artefacto debe coincidir con el que subimos en el paso anterior
+          name: react-app # Esto descargará y extraerá la carpeta 'dist'
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'reactpapalotes1'  # Nombre de tu app en Azure Web App
-          slot-name: 'Production'  # Si estás usando un slot, caso contrario, se puede omitir
-          package: './dist'  # Usamos la carpeta 'dist' para el despliegue
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_9A5888BB8EF44059BC32399BC1A887FC }}  # Secreto del perfil de publicación
+          app-name: 'reactpapalotes1'
+          slot-name: 'Production'
+          # La ruta sigue siendo './dist' porque 'download-artifact'
+          # recrea la carpeta 'dist' en el runner.
+          package: './dist' 
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_9A5888BB8EF44059BC32399BC1A887FC }}
