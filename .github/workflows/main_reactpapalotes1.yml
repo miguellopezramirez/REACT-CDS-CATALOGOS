@@ -21,7 +21,7 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '22.x'  # Usamos una versión compatible con Vite y React
+          node-version: '16.x'  # Usamos una versión compatible con Vite y React
 
       - name: Install dependencies
         run: |
@@ -30,13 +30,14 @@ jobs:
       - name: Build the application
         run: |
           npm run build  # Genera la carpeta 'dist' con los archivos optimizados para producción
+          ls -l dist  # Verificamos si la carpeta 'dist' fue creada correctamente
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: react-app  # Nombre del artefacto
           path: |
-            dist        # Solo subimos la carpeta 'dist' generada por Vite
+            dist        # Subimos solo la carpeta 'dist' generada por Vite
             package.json  # Necesario para instalar dependencias en Azure
             package-lock.json  # Aseguramos la versión exacta de dependencias en Azure
 
@@ -48,9 +49,9 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: react-app
+          name: react-app  # El nombre del artefacto debe coincidir con el que subimos en el paso anterior
 
-      - name: Deploy to Azure Web App
+      - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
