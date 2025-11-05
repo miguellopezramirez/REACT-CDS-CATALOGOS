@@ -21,7 +21,7 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'  # Usamos una versión compatible con Vite y React
+          node-version: '20.x'  # Usamos una versión compatible con Vite y React
 
       - name: Install dependencies
         run: |
