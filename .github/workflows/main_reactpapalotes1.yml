@@ -4,12 +4,12 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
+    permissions: # Mantengo esto como lo tenías
       contents: read
 
     steps:
@@ -20,13 +20,10 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: Install dependencies
-        run: npm install
-        # Si tu app está en una subcarpeta, añade:
-        # working-directory: ./TU_CARPETA_APP
-
-      - name: Build the application
-        run: npm run build
+      - name: Install dependencies and Build
+        run: |
+          npm install
+          npm run build
         # Si tu app está en una subcarpeta, añade:
         # working-directory: ./TU_CARPETA_APP
 
@@ -34,21 +31,26 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: react-app
-          # Solo subimos la carpeta 'dist'
+          # Sube la carpeta 'dist' generada por 'npm run build'
+          path: dist
           # Si usas subcarpeta, cámbialo a: ./TU_CARPETA_APP/dist
-          path: dist 
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    
+    # Añadido desde el ejemplo: bueno para rastrear entornos
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: react-app # Esto descargará y extraerá la carpeta 'dist'
-  # ----- AÑADE ESTO PARA VER QUÉ SE DESCARGÓ -----
-      - name: List files in workspace
+
+      # Este paso es para depuración, puedes quitarlo si quieres
+      - name: List files in workspace (Debug)
         run: ls -laR
 
       - name: 'Deploy to Azure Web App'
@@ -57,7 +59,7 @@ jobs:
         with:
           app-name: 'reactpapalotes1'
           slot-name: 'Production'
-          # La ruta sigue siendo './dist' porque 'download-artifact'
-          # recrea la carpeta 'dist' en el runner.
-          package: '.' 
+          # CORREGIDO: Apunta a la carpeta 'dist' descargada
+          package: 'dist'
+          # CORREGIDO: Se quitó el '*' al final del secret
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_9A5888BB8EF44059BC32399BC1A887FC }}
