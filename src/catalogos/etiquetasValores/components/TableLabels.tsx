@@ -150,16 +150,18 @@ const columns = [
 ];
 
 interface TableLabelsProps {
+    data?: TableParentRow[]; 
     onSelectionChange?: (label: TableParentRow | null) => void;
 }
 
-function TableLabels({ onSelectionChange }: TableLabelsProps){
+function TableLabels({ data: externalData,  onSelectionChange }: TableLabelsProps){
     const [data, setData] = useState<TableParentRow[]>([]);
     // Component state managed by parent
 
     useEffect(() => {
         const handleStoreChange = () => {
-            setData(getLabels());
+            // setData(getLabels());
+            if (!externalData) setData(getLabels());
         };
 
         const unsubscribe = subscribe(handleStoreChange);
@@ -171,8 +173,15 @@ function TableLabels({ onSelectionChange }: TableLabelsProps){
         return () => {
             unsubscribe();
         };
-    }, []);
+    }, [externalData]);
 
+      useEffect(() => {
+    if (externalData) {
+      setData(externalData);
+    }
+  }, [externalData]);
+
+  
     // Component updates are managed by store
 
     const handleSelectionChange = (e?: CustomEvent<any>) => {
