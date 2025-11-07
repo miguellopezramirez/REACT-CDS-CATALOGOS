@@ -141,7 +141,6 @@ const columns = [
   },{
     Header: "IMAGEN",
     accessor: "imagen",
-    // Celda de imagen, no la hacemos editable
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Cell: ({ cell: { value } }: any) => (value ? <img src={value} style={{ height: "40px" }} /> : null)
   },{

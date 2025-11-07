@@ -93,9 +93,7 @@ export const EditableCell = ({
   if (!isEditing) {
     return (
       <div
-        // --- Doble Clic ---
         onDoubleClick={() => setIsEditing(true)}
-        // --- Un Clic ---
         // onClick={() => setIsEditing(true)}
 
         style={{
