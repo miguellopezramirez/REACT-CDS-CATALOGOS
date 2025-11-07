@@ -33,7 +33,18 @@ export const setLabels = (newLabels: TableParentRow[]) => {
 };
 
 export const addOperation = (operation: Operation) => {
-  operations.push(operation); // Agregar la operación al historial
+  if (operation.action === 'UPDATE') {
+    const { id } = operation.payload;
+    
+    operations = operations.filter(op => 
+      !(op.action === 'UPDATE' && op.payload.id === id)
+    );
+    
+    operations.push(operation);
+    
+  } else {
+    operations.push(operation);
+  }
 
   // Actualizar el estado local según la operación
       if (operation.collection === 'labels' && operation.action === 'CREATE') {

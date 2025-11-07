@@ -11,7 +11,7 @@ import ModalNewCatalogo from "../components/ModalNewCatalogo";
 import ModalNewValor from "../components/ModalNewValor";
 import ModalDeleteCatalogo from "../components/ModalDeleteCatalogo";
 import ModalSaveChanges from "../components/ModalSaveChanges";
-import ModalUpdateCatalogo from "../components/ModalUpdateCatalogo";
+// import ModalUpdateCatalogo from "../components/ModalUpdateCatalogo";
 import { fetchLabels, TableParentRow } from "../services/labelService";
 import { setLabels } from "../store/labelStore";
 import { MessageStrip } from "@ui5/webcomponents-react";
@@ -63,7 +63,7 @@ export default function Catalogos() {
         <ModalNewCatalogo />
         <ModalNewValor />
         <ModalDeleteCatalogo />
-        <ModalUpdateCatalogo label={selectedLabel} />
+        {/* <ModalUpdateCatalogo label={selectedLabel} /> */}
         <ToolbarSpacer />
         <ModalSaveChanges onSave={handleSave} />
       </Toolbar>

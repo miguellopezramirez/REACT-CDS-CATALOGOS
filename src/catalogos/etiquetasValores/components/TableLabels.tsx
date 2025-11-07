@@ -5,7 +5,8 @@ import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom'; 
 import { AnalyticalTable, AnalyticalTableHooks, AnalyticalTableSelectionMode } from '@ui5/webcomponents-react';
 import { fetchLabels, TableParentRow } from '../services/labelService';
-import { subscribe, getLabels, setLabels, addOperation } from '../store/labelStore';
+import { subscribe, getLabels, setLabels } from '../store/labelStore';
+import { EditableCell } from './EditableCell';
 
 
 // Componente para la celda de descripción que usa un Portal para el popover flotante
@@ -93,12 +94,14 @@ const columns = [
     Header: "Etiqueta/Valor",
     accessor: "etiqueta",
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Cell: ({ row, cell: { value } }: any) => {
-      return row.original.valor || value;
+    Cell: (props: any) => {
+      if (props.row.original.valor) {
+        return props.row.original.valor;
+      }
+      return <EditableCell {...props} />;
     }
   },
     {
-
     Header: "IDETIQUETA/IDEVALOR",
     accessor: "idetiqueta",
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -118,33 +121,37 @@ const columns = [
     Header: "IDCEDI",
     accessor: "idcedi",
   },
-  
   {
     Header: "INDICE",
     accessor: "indice",
+    Cell: (props: any) => <EditableCell {...props} /> 
   },
   {
     Header: "COLECCION",
     accessor: "coleccion",
+    Cell: (props: any) => <EditableCell {...props} /> 
   },{
     Header: "SECCION",
     accessor: "seccion",
+    Cell: (props: any) => <EditableCell {...props} /> 
   },{
     Header: "SECUENCIA",
     accessor: "secuencia",
+    Cell: (props: any) => <EditableCell {...props} /> 
   },{
     Header: "IMAGEN",
     accessor: "imagen",
+    // Celda de imagen, no la hacemos editable
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Cell: ({ cell: { value } }: any) => (value ? <img src={value} style={{ height: "40px" }} /> : null)
   },{
     Header: "ROUTE",
     accessor: "ruta",
+    Cell: (props: any) => <EditableCell {...props} /> 
   },{
     Header: "DESCRIPCION",
     accessor: "descripcion",
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // AHORA USA EL COMPONENTE CON PORTAL: DescriptionCellPortal
     Cell: ({ cell: { value } }: any) => <DescriptionCellPortal value={value} /> 
   }
 ];
@@ -198,39 +205,6 @@ function TableLabels({ data: externalData,  onSelectionChange }: TableLabelsProp
                 isSelected: row.idetiqueta === selectedRow.idetiqueta,
                 status: row.idetiqueta === selectedRow.idetiqueta ? 'Warning' : row.status
             }));
-            
-            // Sanitize: quitar campos cliente que el backend no espera
-            const sanitizePayload = (obj: any) => {
-                if (!obj) return obj;
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { parent, isSelected, status, subRows, ...rest } = obj;
-                
-                // CAMBIO: Mapear a la estructura { id, updates }
-                return {
-                    id: rest.idetiqueta, // El ID va afuera
-                    updates: { // El objeto de actualizaciones
-                        IDSOCIEDAD: Number(rest.idsociedad) || 0,
-                        IDCEDI: Number(rest.idcedi) || 0,
-                        ETIQUETA: rest.etiqueta,
-                        INDICE: rest.indice,
-                        COLECCION: rest.coleccion,
-                        SECCION: rest.seccion,
-                        SECUENCIA: Number(rest.secuencia) || 0,
-                        IMAGEN: rest.imagen,
-                        ROUTE: rest.ruta,
-                        DESCRIPCION: rest.descripcion
-                    }
-                };
-            };
-            
-            const cleanPayload = sanitizePayload(selectedRow);
-            
-            // Agregar la operación al store con payload limpio
-            addOperation({
-                collection: 'labels',
-                action: 'UPDATE',
-                payload: cleanPayload
-            });
             
             setLabels(updatedData);
         } else {
