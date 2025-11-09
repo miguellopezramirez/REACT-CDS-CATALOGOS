@@ -137,7 +137,6 @@ const columns = [
             <Token
               key={index}
               text={indice.trim()}
-              readOnly
             />
           ))}
         </Tokenizer>
