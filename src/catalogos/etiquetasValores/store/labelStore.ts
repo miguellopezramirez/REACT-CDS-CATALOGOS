@@ -152,3 +152,13 @@ export const clearStatuses = () => {
   });
   notifyListeners();
 };
+
+/**
+ * Limpia la caché de etiquetas en memoria.
+ * Esto forzará a fetchLabels a realizar una nueva llamada a la API.
+ */
+export const clearLabelsCache = () => {
+  console.log("Limpiando caché de etiquetas en memoria...");
+  labels = []; // Vacía el array de etiquetas
+  notifyListeners(); // Notifica a los componentes (ej. la tabla) que los datos cambiaron
+};

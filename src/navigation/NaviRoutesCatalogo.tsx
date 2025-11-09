@@ -7,6 +7,7 @@ import Orders from "../catalogos/orders/pages/Orders";
 import Payments from "../catalogos/payments/pages/Payments";
 import Shippings from "../catalogos/shippings/pages/Shippings";
 import Inventories from "../catalogos/inventories/pages/Inventories";
+import Settings from "../catalogos/settings/pages/Settings";
 //FIC: Share 
 import Error from "../share/errors/pages/Error.js";
 
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
         {
             path: "inventories",
             element: <Inventories />,
+        },
+        {
+            path: "settings",
+            element: <Settings />,
         },
       ],
     },

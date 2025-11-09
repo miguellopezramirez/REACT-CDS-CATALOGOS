@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, Outlet } from 'react-router-dom';
+import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import {
   SideNavigation,
   SideNavigationItem,
@@ -20,6 +20,36 @@ const CommerceAppBar = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const avatarRef = useRef<AvatarDomRef>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const location = useLocation(); // Obtén la ubicación (URL) actual
+  const [selectedKey, setSelectedKey] = useState('home');
+
+  // Este efecto sincroniza la URL con el ítem seleccionado
+  useEffect(() => {
+    const path = location.pathname; // Ej: "/catalogos" o "/settings"
+
+    if (path === '/') {
+      setSelectedKey('home');
+    } else if (path.startsWith('/products')) {
+      setSelectedKey('products');
+    } else if (path.startsWith('/prices')) {
+      setSelectedKey('prices');
+    } else if (path.startsWith('/catalogos')) {
+      setSelectedKey('catalogos');
+    } else if (path.startsWith('/orders')) {
+      setSelectedKey('orders');
+    } else if (path.startsWith('/payments')) {
+      setSelectedKey('payments');
+    } else if (path.startsWith('/shippings')) {
+      setSelectedKey('shippings');
+    } else if (path.startsWith('/inventories')) {
+      setSelectedKey('inventories');
+    } else {
+      // Esta es la parte clave: si estás en "/settings" o cualquier otra ruta,
+      // no selecciones nada.
+      setSelectedKey('');
+    }
+  }, [location.pathname]); // Esto se ejecuta cada vez que la URL cambia
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -76,6 +106,19 @@ const CommerceAppBar = () => {
     setUserMenuOpen((prev) => !prev);
   };
 
+  const handleUserMenuItemClick = (event: CustomEvent<{ item: HTMLElement }>) => {
+    const selectedId = event.detail.item.dataset.id;
+
+    // Comprueba el data-id del item clickeado
+    if (selectedId === 'setting') {
+      navigate('/settings'); // Navega a la pagina de configuración
+    }
+    // Aquí pueden agregar más 'else if' para los otros botones
+
+    // Cierra el menú después de hacer clic
+    setUserMenuOpen(false);
+  };
+
   return (
     <div style={{ height: '100vh', position: 'relative' }}>
       <NavigationLayout
@@ -100,6 +143,7 @@ const CommerceAppBar = () => {
               <UserMenu
                 opener="avatar"
                 open={userMenuOpen}
+                onItemClick={handleUserMenuItemClick}
               >
                 <UserMenuAccount
                   avatarSrc="https://ui5.github.io/webcomponents/images/avatars/woman_avatar_3.png"
@@ -119,15 +163,19 @@ const CommerceAppBar = () => {
           </>
         }
         sideContent={
-          <SideNavigation collapsed={collapsed} onSelectionChange={handleSelectionChange}>
-            <SideNavigationItem text="Home" icon="home" data-key="home" />
-            <SideNavigationItem text="Productos" icon="product" data-key="products" />
-            <SideNavigationItem text="Precios" icon="product" data-key="prices" />
-            <SideNavigationItem text="Catalogos" icon="payment-approval" data-key="catalogos" />
-            <SideNavigationItem text="Ordenes" icon="order-status" data-key="orders" />
-            <SideNavigationItem text="Pagos" icon="payment-approval" data-key="payments" />
-            <SideNavigationItem text="Envios" icon="shipping-status" data-key="shippings" />
-            <SideNavigationItem text="Inventarios" icon="inventory" data-key="inventories" />
+          <SideNavigation
+            collapsed={collapsed}
+            onSelectionChange={handleSelectionChange}
+          >
+            {/* Añade la propiedad 'selected' a cada ítem para elmanejo adecuado de pantallas */}
+            <SideNavigationItem text="Home" icon="home" data-key="home" selected={selectedKey === 'home'} />
+            <SideNavigationItem text="Productos" icon="product" data-key="products" selected={selectedKey === 'products'} />
+            <SideNavigationItem text="Precios" icon="product" data-key="prices" selected={selectedKey === 'prices'} />
+            <SideNavigationItem text="Catalogos" icon="payment-approval" data-key="catalogos" selected={selectedKey === 'catalogos'} />
+            <SideNavigationItem text="Ordenes" icon="order-status" data-key="orders" selected={selectedKey === 'orders'} />
+            <SideNavigationItem text="Pagos" icon="payment-approval" data-key="payments" selected={selectedKey === 'payments'} />
+            <SideNavigationItem text="Envios" icon="shipping-status" data-key="shippings" selected={selectedKey === 'shippings'} />
+            <SideNavigationItem text="Inventarios" icon="inventory" data-key="inventories" selected={selectedKey === 'inventories'} />
           </SideNavigation>
         }
       >
