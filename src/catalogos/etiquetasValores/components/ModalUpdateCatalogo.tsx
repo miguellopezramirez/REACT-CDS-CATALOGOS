@@ -1,11 +1,12 @@
+// src/catalogos/etiquetasValores/components/ModalUpdateCatalogo.tsx
 
-import { Button, FlexBox, FlexBoxJustifyContent, Form, FormGroup, FormItem, Input, Label, Modals } from '@ui5/webcomponents-react';
+import { Button, FlexBox, FlexBoxJustifyContent, Form, FormGroup, FormItem, Input, Label, Dialog, MultiInput, Token } from '@ui5/webcomponents-react';
 import { useState, useEffect, useRef } from 'react';
-import { addOperation } from '../store/labelStore'; // This should be updateOperation later
+import { addOperation } from '../store/labelStore';
 import { TableParentRow } from '../services/labelService';
 
 interface ModalUpdateCatalogoProps {
-    label: TableParentRow | null; // Keep this for now, but it won't be used directly in the UI
+    label: TableParentRow | null;
 }
 
 function ModalUpdateCatalogo({ label }: ModalUpdateCatalogoProps) {
@@ -26,20 +27,37 @@ function ModalUpdateCatalogo({ label }: ModalUpdateCatalogoProps) {
     };
 
     const [formData, setFormData] = useState<TableParentRow>(initialFormState);
-    // ref to always hold the latest form data synchronously (avoids stale state on submit)
     const latestFormRef = useRef<TableParentRow>(initialFormState);
-
     const [errors, setErrors] = useState<any>({});
 
+    // --- Estados para el MultiInput ---
+    const [inputValue, setInputValue] = useState('');
+    const [indiceTokens, setIndiceTokens] = useState<string[]>([]);
+
+    // --- Estado para la visibilidad del Modal ---
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Este useEffect se ejecuta cuando el 'label' seleccionado (la prop) cambia
     useEffect(() => {
         if (label) {
             console.log('Label recibido en ModalUpdate:', label);
+            // Pre-carga el estado del formulario y los tokens
             setFormData(label);
             latestFormRef.current = label;
-        }
-    }, [label]);
 
-    // validate accepts an explicit data snapshot so validation doesn't depend on possibly-stale state
+            const tokens = label.indice ? label.indice.split(',').filter(t => t.trim() !== '') : [];
+            setIndiceTokens(tokens.map(t => t.trim()));
+            setInputValue('');
+        } else {
+            // Resetea si no hay label seleccionado
+            setFormData(initialFormState);
+            latestFormRef.current = initialFormState;
+            setIndiceTokens([]);
+            setInputValue('');
+        }
+    }, [label]); // Depende solo de 'label'
+
+    // --- (La función validate es idéntica) ---
     const validate = (data: Partial<TableParentRow>) => {
         const newErrors: any = {};
         if (!data.etiqueta) newErrors.etiqueta = 'ETIQUETA es requerido.';
@@ -49,46 +67,26 @@ function ModalUpdateCatalogo({ label }: ModalUpdateCatalogoProps) {
         if (!data.idetiqueta) newErrors.idetiqueta = 'ID ETIQUETA es requerido.';
         if (data.idsociedad === undefined || data.idsociedad === null || data.idsociedad === '') newErrors.idsociedad = 'ID SOCIEDAD es requerido.';
         if (data.idcedi === undefined || data.idcedi === null || data.idcedi === '') newErrors.idcedi = 'ID CEDI es requerido.';
-
-        // Validar que los campos numéricos sean válidos cuando no estén vacíos
         if (data.secuencia !== undefined && data.secuencia !== null && isNaN(Number(data.secuencia))) newErrors.secuencia = 'SECUENCIA debe ser un número.';
         if (data.idsociedad !== undefined && data.idsociedad !== null && data.idsociedad !== '' && isNaN(Number(data.idsociedad))) newErrors.idsociedad = 'ID SOCIEDAD debe ser un número.';
         if (data.idcedi !== undefined && data.idcedi !== null && data.idcedi !== '' && isNaN(Number(data.idcedi))) newErrors.idcedi = 'ID CEDI debe ser un número.';
-
         setErrors(newErrors);
         const isValid = Object.keys(newErrors).length === 0;
-
         if (!isValid) {
             console.error('Errores de validación:', JSON.stringify(newErrors));
-        } else {
-            console.log('Validación exitosa. Datos del formulario (snapshot):', JSON.stringify(data));
         }
-
         return isValid;
     };
 
+
+    // --- (La función handleChange es idéntica) ---
     const handleChange = (e: any) => {
-        // Preferir currentTarget (el componente al que se ligó el handler) para obtener el nombre
-        // y preferir e.detail.value porque @ui5/webcomponents-react lo pone ahí.
         const current = e.currentTarget;
         const target = e.target;
-
         const name = (current && (current.name || (current.getAttribute && current.getAttribute('name'))))
             || (target && (target.name || (target.getAttribute && target.getAttribute('name')))) || '';
-
         const value = (e && e.detail && e.detail.value !== undefined) ? e.detail.value
             : (target && (target.value !== undefined ? target.value : (target.getAttribute && target.getAttribute('value')))) || '';
-
-        // Debug: mostrar ambas fuentes posibles para name y value para entender por qué algunos campos no se capturan
-        console.log('handleChange event sources ->', {
-            currentName: current && (current.name || (current.getAttribute && current.getAttribute('name'))),
-            targetName: target && (target.name || (target.getAttribute && target.getAttribute('name'))),
-            detailValue: e && e.detail && e.detail.value,
-            targetValue: target && target.value,
-            computedName: name,
-            computedValue: value
-        });
-        console.log(`Actualizando campo ${name} con valor:`, value);
 
         setFormData(prevState => {
             const converted = name === 'secuencia' ? (Number(value) || 0) : value;
@@ -96,25 +94,37 @@ function ModalUpdateCatalogo({ label }: ModalUpdateCatalogoProps) {
                 ...prevState,
                 [name]: converted
             } as TableParentRow;
-            // keep ref in sync so submit can read latest values synchronously
             latestFormRef.current = updatedState;
-            // console.log('Estado actualizado (calculado):', JSON.stringify(updatedState));
             return updatedState;
         });
     };
 
-    const handleSubmit = async (close: () => void) => {
-    // Use the latest synchronous snapshot from ref to avoid stale state when user clicks fast
-    const snapshot: TableParentRow = { ...(latestFormRef.current || formData) };
+    // --- Manejadores del Modal ---
+    const openModal = () => {
+        // Asegura que solo se abra si hay un label seleccionado
+        if (!label) {
+            console.error("No se puede actualizar, no hay ningún catálogo seleccionado.");
+            return;
+        }
+        // Los datos ya se cargaron con el useEffect.
+        // Solo reseteamos errores y abrimos.
+        setErrors({});
+        setIsModalOpen(true);
+    };
 
-    if (validate(snapshot)) {
+    const closeModal = () => {
+        setIsModalOpen(false);
+    };
+
+    // --- handleSubmit ya no recibe 'close' como argumento ---
+    const handleSubmit = async () => {
+        const snapshot: TableParentRow = { ...(latestFormRef.current || formData) };
+
+        if (validate(snapshot)) {
             try {
-        // console.log('FormData antes de enviar (snapshot):', JSON.stringify(snapshot));
-
-                // CAMBIO: Estructurar el payload como { id, updates }
                 const updatePayload = {
-                    id: snapshot.idetiqueta, // ID va afuera
-                    updates: { // updates es un objeto anidado
+                    id: snapshot.idetiqueta,
+                    updates: {
                         IDSOCIEDAD: Number(snapshot.idsociedad) || 0,
                         IDCEDI: Number(snapshot.idcedi) || 0,
                         ETIQUETA: snapshot.etiqueta,
@@ -125,84 +135,176 @@ function ModalUpdateCatalogo({ label }: ModalUpdateCatalogoProps) {
                         IMAGEN: snapshot.imagen,
                         ROUTE: snapshot.ruta,
                         DESCRIPCION: snapshot.descripcion
-                        // NOTA: No es necesario incluir IDETIQUETA dentro de 'updates'
                     }
                 };
-
-                // console.log('Payload a enviar (anidado):', JSON.stringify(updatePayload));
 
                 await addOperation({
                     collection: 'labels',
                     action: 'UPDATE',
-                    payload: updatePayload // Enviar el nuevo payload
+                    payload: updatePayload
                 });
                 console.log('Operación de actualización enviada');
-                close();
+                closeModal(); // <-- Llama a closeModal directamente
             } catch (error) {
                 console.error("Error calling update operation:", error);
             }
         }
     };
 
+    // --- NUEVO RENDER ---
     return <>
         <Button
             design="Emphasized"
             icon="edit"
-            onClick={() => {
-                const { close } = Modals.showDialog({
-                    headerText: 'Actualiza el Catalogo',
-                    children: <Form>
-                        <FormGroup headerText='Informacion del Catalogo'>
-                            <FormItem labelContent={<Label required>ID de la etiqueta</Label>}>
-                                <Input name="idetiqueta" value={formData.idetiqueta} onInput={handleChange} />
-                                {errors.idetiqueta && <span style={{ color: 'red' }}>{errors.idetiqueta}</span>}
-                            </FormItem>
-                            <FormItem labelContent={<Label >IDSOCIEDAD</Label>}>
-                                <Input type="Number" name="idsociedad" value={formData.idsociedad.toString()} onInput={handleChange} />
-                            </FormItem>
-                            <FormItem labelContent={<Label>IDCEDI</Label>}>
-                                <Input type="Number" name="idcedi" value={formData.idcedi.toString()} onInput={handleChange} />
-                            </FormItem>
-                            <FormItem labelContent={<Label required>ETIQUETA</Label>}>
-                                <Input name="etiqueta" value={formData.etiqueta} onInput={handleChange} />
-                                {errors.etiqueta && <span style={{ color: 'red' }}>{errors.etiqueta}</span>}
-                            </FormItem>
-                            <FormItem labelContent={<Label required>INDICE</Label>}>
-                                <Input name="indice" value={formData.indice} onInput={handleChange} />
-                                {errors.indice && <span style={{ color: 'red' }}>{errors.indice}</span>}
-                            </FormItem>
-                            <FormItem labelContent={<Label required>COLECCION</Label>}>
-                                <Input name="coleccion" value={formData.coleccion} onInput={handleChange} />
-                                {errors.coleccion && <span style={{ color: 'red' }}>{errors.coleccion}</span>}
-                            </FormItem>
-                            <FormItem labelContent={<Label required>SECCION</Label>}>
-                                <Input name="seccion" value={formData.seccion} onInput={handleChange} />
-                                {errors.seccion && <span style={{ color: 'red' }}>{errors.seccion}</span>}
-                            </FormItem>
-                            <FormItem labelContent={<Label>SECUENCIA</Label>}>
-                                <Input name="secuencia" type="Number" value={formData.secuencia.toString()} onInput={handleChange} />
-                            </FormItem>
-                            <FormItem labelContent={<Label>Imagen</Label>}>
-                                <Input name="imagen" value={formData.imagen} onInput={handleChange} />
-                            </FormItem>
-                            <FormItem labelContent={<Label>Ruta</Label>}>
-                                <Input name="ruta" value={formData.ruta} onInput={handleChange} />
-                            </FormItem>
-                            <FormItem labelContent={<Label>Descripcion</Label>}>
-                                <Input name="descripcion" value={formData.descripcion} onInput={handleChange} />
-                            </FormItem>
-                        </FormGroup>
-                    </Form>,
-                    footer: <FlexBox justifyContent={FlexBoxJustifyContent.End} fitContainer style={{
-                        paddingBlock: '0.25rem'
-                    }}>
-                        <Button onClick={() => handleSubmit(close)}>Actualizar</Button>
-                        <Button onClick={() => close()}>Cancelar</Button>{' '}
-                    </FlexBox>
-                });
-            }}>
+            onClick={openModal} // <-- Llama a openModal
+            disabled={!label}   // <-- Deshabilita el botón si no hay label
+        >
             Actualizar Catalogo
         </Button>
+
+        {/* El Dialog declarativo */}
+        <Dialog
+            open={isModalOpen}
+            onClose={closeModal}
+            headerText='Actualiza el Catalogo'
+            footer={
+                <FlexBox justifyContent={FlexBoxJustifyContent.End} fitContainer style={{ paddingBlock: '0.25rem' }}>
+                    <Button onClick={handleSubmit}>Actualizar</Button>
+                    <Button onClick={closeModal}>Cancelar</Button>
+                </FlexBox>
+            }
+        >
+            {/* El Form ahora es un hijo directo y se re-renderizará con el estado */}
+            <Form>
+                <FormGroup headerText='Informacion del Catalogo'>
+
+                    <FormItem labelContent={<Label required>ID de la etiqueta</Label>}>
+                        {/* El ID no debería ser editable */}
+                        <Input name="idetiqueta" value={formData.idetiqueta} readonly />
+                        {errors.idetiqueta && <span style={{ color: 'red' }}>{errors.idetiqueta}</span>}
+                    </FormItem>
+
+                    <FormItem labelContent={<Label >IDSOCIEDAD</Label>}>
+                        <Input type="Number" name="idsociedad" value={formData.idsociedad.toString()} onInput={handleChange} />
+                    </FormItem>
+
+                    <FormItem labelContent={<Label>IDCEDI</Label>}>
+                        <Input type="Number" name="idcedi" value={formData.idcedi.toString()} onInput={handleChange} />
+                    </FormItem>
+
+                    <FormItem labelContent={<Label required>ETIQUETA</Label>}>
+                        <Input name="etiqueta" value={formData.etiqueta} onInput={handleChange} />
+                        {errors.etiqueta && <span style={{ color: 'red' }}>{errors.etiqueta}</span>}
+                    </FormItem>
+
+                    <FormItem labelContent={<Label required>INDICE</Label>}>
+                        <MultiInput
+                            name="indice" // Usado por 'validate'
+                            value={inputValue}
+                            placeholder="Escriba y presione Enter"
+                            valueState={errors.indice ? "Negative" : "None"}
+                            valueStateMessage={<div slot="valueStateMessage">{errors.indice}</div>}
+
+                            tokens={indiceTokens.map((tokenText, index) => (
+                                <Token key={index} text={tokenText} />
+                            ))}
+
+                            onInput={(e) => setInputValue(e.target.value)}
+
+                            onTokenDelete={(e) => {
+                                if (!e.detail.tokens || e.detail.tokens.length === 0) return;
+                                const deletedText = e.detail.tokens[0].text;
+                                const newTokens = indiceTokens.filter((t) => t !== deletedText);
+                                setIndiceTokens(newTokens);
+
+                                // ¡Usamos handleChange para actualizar el estado principal!
+                                const newIndiceString = newTokens.join(',');
+                                const fakeEvent = { currentTarget: { getAttribute: () => 'indice' }, detail: { value: newIndiceString } };
+                                handleChange(fakeEvent);
+                            }}
+
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && inputValue.trim() !== '') {
+                                    e.preventDefault();
+                                    const newText = inputValue.trim();
+                                    if (!indiceTokens.includes(newText)) {
+                                        const newTokens = [...indiceTokens, newText];
+                                        setIndiceTokens(newTokens);
+
+                                        const newIndiceString = newTokens.join(',');
+                                        const fakeEvent = { currentTarget: { getAttribute: () => 'indice' }, detail: { value: newIndiceString } };
+                                        handleChange(fakeEvent);
+                                    }
+                                    setInputValue('');
+                                }
+                            }}
+
+                            // Agregamos onPaste (faltaba en tu código)
+                            onPaste={(e) => {
+                                e.preventDefault();
+                                const pasteText = e.clipboardData.getData('text');
+                                const pastedTokens = pasteText.split(',')
+                                    .map(t => t.trim())
+                                    .filter(t => t !== '' && !indiceTokens.includes(t));
+
+                                if (pastedTokens.length > 0) {
+                                    const newTokens = [...indiceTokens, ...pastedTokens];
+                                    setIndiceTokens(newTokens);
+
+                                    const newIndiceString = newTokens.join(',');
+                                    const fakeEvent = { currentTarget: { getAttribute: () => 'indice' }, detail: { value: newIndiceString } };
+                                    handleChange(fakeEvent);
+                                    setInputValue('');
+                                }
+                            }}
+
+                            onBlur={() => {
+                                const newText = inputValue.trim();
+                                if (newText !== '') {
+                                    if (!indiceTokens.includes(newText)) {
+                                        const newTokens = [...indiceTokens, newText];
+                                        setIndiceTokens(newTokens);
+
+                                        const newIndiceString = newTokens.join(',');
+                                        const fakeEvent = { currentTarget: { getAttribute: () => 'indice' }, detail: { value: newIndiceString } };
+                                        handleChange(fakeEvent);
+                                    }
+                                    setInputValue('');
+                                }
+                            }}
+                        />
+                        {errors.indice && <span style={{ color: 'red' }}>{errors.indice}</span>}
+                    </FormItem>
+
+                    <FormItem labelContent={<Label required>COLECCION</Label>}>
+                        <Input name="coleccion" value={formData.coleccion} onInput={handleChange} />
+                        {errors.coleccion && <span style={{ color: 'red' }}>{errors.coleccion}</span>}
+                    </FormItem>
+
+                    <FormItem labelContent={<Label required>SECCION</Label>}>
+                        <Input name="seccion" value={formData.seccion} onInput={handleChange} />
+                        {errors.seccion && <span style={{ color: 'red' }}>{errors.seccion}</span>}
+                    </FormItem>
+
+                    <FormItem labelContent={<Label>SECUENCIA</Label>}>
+                        <Input name="secuencia" type="Number" value={formData.secuencia.toString() || ''} onInput={handleChange} />
+                    </FormItem>
+
+                    <FormItem labelContent={<Label>Imagen</Label>}>
+                        <Input name="imagen" value={formData.imagen} onInput={handleChange} />
+                    </FormItem>
+
+                    <FormItem labelContent={<Label>Ruta</Label>}>
+                        <Input name="ruta" value={formData.ruta} onInput={handleChange} />
+                    </FormItem>
+
+                    <FormItem labelContent={<Label>Descripcion</Label>}>
+                        <Input name="descripcion" value={formData.descripcion} onInput={handleChange} />
+                    </FormItem>
+
+                </FormGroup>
+            </Form>
+        </Dialog>
     </>
 }
 

@@ -87,8 +87,8 @@ export interface TableParentRow {
 const transformData = (labels: ApiLabel[]): TableParentRow[] => {
     return labels.map((label) => {
         const subRows: TableSubRow[] = (label.valores || []).map((valor) => ({
-            idsociedad: valor.IDSOCIEDAD.toString(),
-            idcedi: valor.IDCEDI.toString(),
+            idsociedad: valor.IDSOCIEDAD,
+            idcedi: valor.IDCEDI,
             idetiqueta: valor.IDETIQUETA,
             idvalor: valor.IDVALOR,
             idvalorpa: valor.IDVALORPA,
@@ -105,8 +105,8 @@ const transformData = (labels: ApiLabel[]): TableParentRow[] => {
         }));
         return {
             parent: true,
-            idsociedad: label.IDSOCIEDAD.toString(),
-            idcedi: label.IDCEDI.toString(),
+            idsociedad: label.IDSOCIEDAD,
+            idcedi: label.IDCEDI,
             idetiqueta: label.IDETIQUETA,
             etiqueta: label.ETIQUETA,
             indice: label.INDICE || '',
