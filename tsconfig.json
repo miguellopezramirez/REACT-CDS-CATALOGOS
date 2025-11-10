@@ -1,3 +1,4 @@
+// tsconfig.json
 {
   "compilerOptions": {
     "target": "ESNext",
@@ -11,6 +12,9 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    /* FIC: AÑADIR/CAMBIAR para permitir la importación de módulos JS sin tipos */
+    "allowJs": true,
+    "checkJs": false,
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,

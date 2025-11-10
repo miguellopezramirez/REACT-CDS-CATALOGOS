@@ -10,7 +10,7 @@ import './index.css';
 import { getTheme, ThemeType } from './share/services/settingsService';
 import { themeChangeEvent } from './catalogos/settings/pages/Settings'; 
 // FIC: Importar el set de tema directamente de UI5 Web Components
-import { setTheme as setUi5Theme } from "@ui5/webcomponents-base/dist/config/Theme";
+import { setTheme as setUi5Theme } from "@ui5/webcomponents-base/dist/config/Theme"; // OK con src/ui5.d.ts
 
 // Componente Wrapper para el tema
 const ThemedApp = () => {
@@ -31,8 +31,7 @@ const ThemedApp = () => {
       // 3. Usar la función oficial de UI5 para cambiar el tema
       setUi5Theme(newTheme);
       
-      // 4. Actualizar el estado local (para forzar re-render si fuera necesario, 
-      // aunque setTheme de UI5 ya maneja la mayor parte)
+      // 4. Actualizar el estado local 
       setCurrentTheme(newTheme);
     };
 
@@ -43,9 +42,6 @@ const ThemedApp = () => {
     return () => {
       document.removeEventListener(themeChangeEvent, handleThemeChange as EventListener);
     };
-    
-    // NOTA: El tema se aplica con setUi5Theme(currentTheme) al montar y ThemeProvider
-    // utiliza la configuración global de UI5, por lo que no necesita props.
   }, []); 
 
   return (
