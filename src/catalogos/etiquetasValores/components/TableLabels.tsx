@@ -8,9 +8,15 @@ import { fetchLabels, TableParentRow } from '../services/labelService';
 import { subscribe, getLabels, setLabels, addOperation } from '../store/labelStore';
 
 
-// Componente para la celda de descripción que usa un Portal para el popover flotante
-const DescriptionCellPortal = ({ value }: { value: string }) => {
-  const valueStr = value || '';
+// Componente generalizado para la celda con Tooltip/Popover flotante
+const CellTooltip = ({ value }: { value: string | number | null | undefined }) => {
+  // Asegura que el valor sea una cadena, maneja null/undefined
+  const valueStr = value !== null && value !== undefined ? String(value) : '';
+  
+  if (!valueStr) {
+      return null;
+  }
+
   const cellRef = useRef<HTMLDivElement>(null);
   const [popoverPosition, setPopoverPosition] = useState<{ x: number, y: number } | null>(null);
 
@@ -74,7 +80,6 @@ const DescriptionCellPortal = ({ value }: { value: string }) => {
 
             // Desplazamiento clave: mueve el popover a la izquierda por su propio ancho (100%) y 
             // un ajuste vertical de -1px para alinearse perfectamente con el borde superior de la celda.
-            // Esto logra la expansión hacia la izquierda, tal como lo solicitaste.
             transform: 'translate(calc(-100% + 2px), -1px)',
           }}
         >
@@ -94,7 +99,8 @@ const columns = [
     accessor: "etiqueta",
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Cell: ({ row, cell: { value } }: any) => {
-      return row.original.valor || value;
+      // Usa CellTooltip para mostrar etiqueta o valor con popover
+      return <CellTooltip value={row.original.valor || value} />;
     }
   },
   {
@@ -103,20 +109,27 @@ const columns = [
     accessor: "idetiqueta",
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Cell: ({ row, cell: { value } }: any) => {
-      return row.original.idvalor || value;
+      // Usa CellTooltip para mostrar IDETIQUETA o IDVALOR con popover
+      return <CellTooltip value={row.original.idvalor || value} />;
     }
   },
   {
     Header: "IDSOCIEDAD",
     accessor: "idsociedad",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Cell: ({ cell: { value } }: any) => <CellTooltip value={value} />
   },
   {
     Header: "VALOR PADRE",
     accessor: "idvalorpa",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Cell: ({ cell: { value } }: any) => <CellTooltip value={value} />
   },
   {
     Header: "IDCEDI",
     accessor: "idcedi",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Cell: ({ cell: { value } }: any) => <CellTooltip value={value} />
   },
   {
     Header: "INDICE",
@@ -128,6 +141,7 @@ const columns = [
       }
       const indices = valueStr.split(',').filter(v => v.trim() !== ''); // Dividir y limpiar
 
+      // Se mantiene la lógica original de Tokenizer ya que ofrece una funcionalidad de tooltip propia
       return (
         <Tokenizer
           title={valueStr} // Muestra la lista
@@ -146,26 +160,34 @@ const columns = [
   {
     Header: "COLECCION",
     accessor: "coleccion",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Cell: ({ cell: { value } }: any) => <CellTooltip value={value} />
   }, {
     Header: "SECCION",
     accessor: "seccion",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Cell: ({ cell: { value } }: any) => <CellTooltip value={value} />
   }, {
     Header: "SECUENCIA",
     accessor: "secuencia",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Cell: ({ cell: { value } }: any) => <CellTooltip value={value} />
   }, {
     Header: "IMAGEN",
     accessor: "imagen",
+    // Se mantiene la lógica para la imagen sin popover
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Cell: ({ cell: { value } }: any) => (value ? <img src={value} style={{ height: "40px" }} /> : null)
   }, {
     Header: "ROUTE",
     accessor: "ruta",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Cell: ({ cell: { value } }: any) => <CellTooltip value={value} />
   }, {
     Header: "DESCRIPCION",
     accessor: "descripcion",
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // AHORA USA EL COMPONENTE CON PORTAL: DescriptionCellPortal
-    Cell: ({ cell: { value } }: any) => <DescriptionCellPortal value={value} />
+    Cell: ({ cell: { value } }: any) => <CellTooltip value={value} />
   }
 ];
 
