@@ -87,17 +87,17 @@ export interface TableParentRow {
 const transformData = (labels: ApiLabel[]): TableParentRow[] => {
     return labels.map((label) => {
         const subRows: TableSubRow[] = (label.valores || []).map((valor) => ({
-            idsociedad: valor.IDSOCIEDAD.toString(),
-            idcedi: valor.IDCEDI.toString(),
-            idetiqueta: valor.IDETIQUETA,
-            idvalor: valor.IDVALOR,
-            idvalorpa: valor.IDVALORPA,
-            valor: valor.VALOR,
-            alias: valor.ALIAS,
-            secuencia: valor.SECUENCIA,
-            imagen: valor.IMAGEN,
-            ruta: valor.ROUTE,
-            descripcion: valor.DESCRIPCION,
+            idsociedad: valor.IDSOCIEDAD?.toString() || '',
+            idcedi: valor.IDCEDI?.toString() || '',
+            idetiqueta: valor.IDETIQUETA || '',
+            idvalor: valor.IDVALOR || '',
+            idvalorpa: valor.IDVALORPA || null,
+            valor: valor.VALOR || '',
+            alias: valor.ALIAS || '',
+            secuencia: valor.SECUENCIA || 0,
+            imagen: valor.IMAGEN || null,
+            ruta: valor.ROUTE || null,
+            descripcion: valor.DESCRIPCION || '',
             // Heredar de la etiqueta padre
             indice: label.INDICE || '',
             coleccion: label.COLECCION || '',
@@ -105,8 +105,8 @@ const transformData = (labels: ApiLabel[]): TableParentRow[] => {
         }));
         return {
             parent: true,
-            idsociedad: label.IDSOCIEDAD.toString(),
-            idcedi: label.IDCEDI.toString(),
+            idsociedad: label.IDSOCIEDAD?.toString() || '',
+            idcedi: label.IDCEDI?.toString() || '',
             idetiqueta: label.IDETIQUETA,
             etiqueta: label.ETIQUETA,
             indice: label.INDICE || '',
