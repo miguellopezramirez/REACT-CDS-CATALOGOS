@@ -1,6 +1,7 @@
 
 // src/catalogos/etiquetasValores/services/labelService.ts
 import { getLabels, setLabels, getOperations, clearOperations } from '../store/labelStore';
+import { getDbServer } from '../../../share/services/settingsService';
 // Interfaces para la respuesta de la API
 export interface ApiDetailRowReg {
     CURRENT: boolean;
@@ -126,7 +127,13 @@ export const fetchLabels = async (): Promise<TableParentRow[]> => {
         return storedLabels;
     }
     try {
-        const response = await fetch('http://localhost:3034/api/cat/crudLabelsValues?ProcessType=GetAll&LoggedUser=MIGUELLOPEZ&DBServer=MongoDB', {
+        const dbServer = getDbServer(); // Obtiene la DB seleccionada
+        // Construye la URL dinámicamente
+        const apiUrl = `http://localhost:3034/api/cat/crudLabelsValues?ProcessType=GetAll&LoggedUser=MIGUELLOPEZ&DBServer=${dbServer}`;
+        
+        console.log(`Fetching labels from: ${apiUrl}`); // Para depuración
+
+        const response = await fetch(apiUrl, { // Usa la URL dinámica
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -157,7 +164,13 @@ export const saveChanges = async () => {
 
     try {
         console.log("operations:", JSON.stringify(operations , null ,2))
-        const response = await fetch('http://localhost:3034/api/cat/crudLabelsValues?ProcessType=CRUD&LoggedUser=MIGUELLOPEZ&DBServer=MongoDB', {
+        const dbServer = getDbServer(); // Obtiene la DB seleccionada
+        // Construye la URL dinámicamente
+        const apiUrl = `http://localhost:3034/api/cat/crudLabelsValues?ProcessType=CRUD&LoggedUser=MIGUELLOPEZ&DBServer=${dbServer}`;
+
+        console.log(`Saving changes to: ${apiUrl}`); // Para depuración
+
+        const response = await fetch(apiUrl, { // Usa la URL dinámica
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
