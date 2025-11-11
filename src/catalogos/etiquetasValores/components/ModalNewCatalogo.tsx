@@ -161,7 +161,7 @@ function ModalNewCatalogo() {
       footer={
         <FlexBox justifyContent={FlexBoxJustifyContent.End} fitContainer style={{ paddingBlock: '0.25rem' }}>
           <Button onClick={handleSubmit}>Crear</Button>
-          <Button onClick={closeModal}>Close</Button>{' '}
+          <Button onClick={closeModal}>Cerrar</Button>{' '}
         </FlexBox>
       }
     >

@@ -41,10 +41,10 @@ export default function Catalogos() {
   const filteredLabels = labels.filter((label) => {
     const term = searchTerm.toLowerCase();
     return (
-      label.etiqueta.toLowerCase().includes(term) ||
-      label.descripcion.toLowerCase().includes(term) ||
-      label.coleccion.toLowerCase().includes(term) ||
-      label.seccion.toLowerCase().includes(term)
+      label.etiqueta?.toLowerCase().includes(term) ||
+      label.descripcion?.toLowerCase().includes(term) ||
+      label.coleccion?.toLowerCase().includes(term) ||
+      label.seccion?.toLowerCase().includes(term)
     );
   });
 

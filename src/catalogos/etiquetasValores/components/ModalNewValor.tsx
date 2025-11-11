@@ -14,6 +14,7 @@ import {
 import { useState, useRef, useEffect } from "react";
 import { addOperation, getLabels, subscribe } from "../store/labelStore";
 import { TableParentRow } from "../services/labelService";
+import { ValueHelpSelector } from "./ValueHelpSelector";
 
 const initialFormState = {
   IDVALOR: "",
@@ -250,11 +251,12 @@ function ModalNewValor() {
             </FormItem>
 
             <FormItem labelContent={<Label>ID Valor Padre (IDVALORPA)</Label>}>
-              <Input
-                name="IDVALORPA"
-                value={formData.IDVALORPA}
-                onInput={handleChange}
-              />
+
+              <ValueHelpSelector
+                
+                data={parentLabels}
+                value={selectedParentId}
+                onSelect={setSelectedParentId}/>
             </FormItem>
 
             <FormItem labelContent={<Label>Alias</Label>}>

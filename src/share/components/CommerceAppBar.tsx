@@ -122,6 +122,7 @@ const CommerceAppBar = () => {
   return (
     <div style={{ height: '100vh', position: 'relative' }}>
       <NavigationLayout
+        mode= "Collapsed"
         header={
           <>
             <ShellBar
