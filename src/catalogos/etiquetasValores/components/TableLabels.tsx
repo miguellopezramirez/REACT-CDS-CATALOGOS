@@ -202,15 +202,23 @@ function TableLabels({ data: externalData, onSelectionChange }: TableLabelsProps
 
   useEffect(() => {
     const handleStoreChange = () => {
-      // setData(getLabels());
-      if (!externalData) setData(getLabels());
-    };
+
+      if (externalData) {
+      setData(externalData);
+      return;
+    } 
+  }
+
 
     const unsubscribe = subscribe(handleStoreChange);
 
-    fetchLabels().then((transformedData) => {
-      setLabels(transformedData.map(item => ({ ...item, isSelected: false })));
-    });
+    if (getLabels().length === 0) {
+      fetchLabels().then((transformedData) => {
+        setLabels(transformedData.map(item => ({ ...item, isSelected: false })));
+      });
+    }else {
+      setData(getLabels());
+    }
 
     return () => {
       unsubscribe();

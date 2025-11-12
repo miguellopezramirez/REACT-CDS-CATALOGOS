@@ -13,7 +13,7 @@ import ModalDeleteCatalogo from "../components/ModalDeleteCatalogo";
 import ModalSaveChanges from "../components/ModalSaveChanges";
 import ModalUpdateCatalogo from "../components/ModalUpdateCatalogo";
 import { fetchLabels, TableParentRow } from "../services/labelService";
-import { setLabels } from "../store/labelStore";
+import { setLabels, getLabels, subscribe } from "../store/labelStore";
 import { MessageStrip } from "@ui5/webcomponents-react";
 
 export default function Catalogos() {
@@ -29,6 +29,15 @@ export default function Catalogos() {
       setLabels(transformedData);
       setLocalLabels(transformedData);
     });
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribe(() => {
+      setLocalLabels(getLabels());
+    });
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const handleSave = () => {
