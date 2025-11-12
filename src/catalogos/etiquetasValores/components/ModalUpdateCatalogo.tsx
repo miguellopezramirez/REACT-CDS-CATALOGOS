@@ -1,15 +1,16 @@
 // src/catalogos/etiquetasValores/components/ModalUpdateCatalogo.tsx
 
-import { Button, FlexBox, FlexBoxJustifyContent, Form, FormGroup, FormItem, Input, Label, Dialog, MultiInput, Token } from '@ui5/webcomponents-react';
+import { Button, FlexBox, FlexBoxJustifyContent, Form, FormGroup, FormItem, Input, Label, Dialog, MultiInput, Token} from '@ui5/webcomponents-react';
 import { useState, useEffect, useRef } from 'react';
 import { addOperation } from '../store/labelStore';
 import { TableParentRow } from '../services/labelService';
 
 interface ModalUpdateCatalogoProps {
     label: TableParentRow | null;
+    compact?: boolean;
 }
 
-function ModalUpdateCatalogo({ label }: ModalUpdateCatalogoProps) {
+function ModalUpdateCatalogo({ label, compact = false }: ModalUpdateCatalogoProps) {
     const initialFormState: TableParentRow = {
         parent: true,
         idetiqueta: '',
@@ -156,10 +157,11 @@ function ModalUpdateCatalogo({ label }: ModalUpdateCatalogoProps) {
         <Button
             design="Emphasized"
             icon="edit"
+            accessibleName="Actualizar Catalogo" // Accesibilidad para lectores de pantalla
             onClick={openModal} // <-- Llama a openModal
             disabled={!label}   // <-- Deshabilita el botón si no hay label
         >
-            Actualizar Catalogo
+            {!compact && 'Actualizar Catalogo'}
         </Button>
 
         {/* El Dialog declarativo */}
@@ -185,7 +187,7 @@ function ModalUpdateCatalogo({ label }: ModalUpdateCatalogoProps) {
                     </FormItem>
 
                     <FormItem labelContent={<Label >IDSOCIEDAD</Label>}>
-                        <Input type="Number" name="idsociedad" value={formData.idsociedad.toString()} onInput={handleChange} />
+                        <Input type="Number" name="idsociedad" value={formData.idsociedad.toString() ?? ''} onInput={handleChange} />
                     </FormItem>
 
                     <FormItem labelContent={<Label>IDCEDI</Label>}>
@@ -287,7 +289,7 @@ function ModalUpdateCatalogo({ label }: ModalUpdateCatalogoProps) {
                     </FormItem>
 
                     <FormItem labelContent={<Label>SECUENCIA</Label>}>
-                        <Input name="secuencia" type="Number" value={formData.secuencia.toString() || ''} onInput={handleChange} />
+                        <Input name="secuencia" type="Number" value={String (formData.secuencia ?? '')} onInput={handleChange} />
                     </FormItem>
 
                     <FormItem labelContent={<Label>Imagen</Label>}>

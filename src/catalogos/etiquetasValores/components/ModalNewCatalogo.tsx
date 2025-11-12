@@ -16,7 +16,11 @@ const initialFormState = {
   DESCRIPCION: '',
 };
 
-function ModalNewCatalogo() {
+interface ModalNewCatalogoProps {
+    compact?: boolean;
+}
+
+function ModalNewCatalogo({ compact = false }: ModalNewCatalogoProps) {
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState<any>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -151,8 +155,8 @@ function ModalNewCatalogo() {
   };
 
   return <>
-    <Button design="Positive" icon="add" onClick={openModal}>
-      Crear Nuevo Catalogo
+    <Button design="Positive" icon="add" onClick={openModal} accessibleName="Crear Nuevo Catalogo">
+      {!compact && 'Crear Nuevo Catalogo'}
     </Button>
     <Dialog
       open={isModalOpen}

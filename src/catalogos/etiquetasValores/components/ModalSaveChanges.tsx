@@ -7,9 +7,10 @@ import { clearStatuses } from '../store/labelStore';
 
 interface ModalSaveChangesProps {
     onSave: () => void;
+    compact?: boolean;
 }
 
-function ModalSaveChanges({ onSave }: ModalSaveChangesProps) {
+function ModalSaveChanges({ onSave, compact = false }: ModalSaveChangesProps) {
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
     const handleSaveChanges = async () => {
@@ -37,8 +38,9 @@ function ModalSaveChanges({ onSave }: ModalSaveChangesProps) {
                 design="Emphasized"
                 icon="save"
                 onClick={() => setShowConfirmDialog(true)}
+                accessibleName="Guardar cambios"
             >
-                Guardar cambios
+                {!compact && 'Guardar cambios'}
             </Button>
             <MessageBox
                 open={showConfirmDialog}

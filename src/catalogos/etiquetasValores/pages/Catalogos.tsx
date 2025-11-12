@@ -23,6 +23,7 @@ export default function Catalogos() {
   );
   const [labels, setLocalLabels] = useState<TableParentRow[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSmall, setIsSmall] = useState(false);
 
   useEffect(() => {
     fetchLabels().then((transformedData) => {
@@ -38,6 +39,14 @@ export default function Catalogos() {
     return () => {
       unsubscribe();
     };
+  }, []);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 970px)');
+    const onChange = (e: MediaQueryListEvent) => setIsSmall(e.matches);
+    setIsSmall(mql.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
   }, []);
 
   const handleSave = () => {
@@ -69,13 +78,14 @@ export default function Catalogos() {
           marginBottom: "1rem",
         }}
       >
-        <ModalNewCatalogo />
-        <ModalNewValor />
-        <ModalDeleteCatalogo />
-        <ModalUpdateCatalogo label={selectedLabel} />
-        <ToolbarSpacer />
-        <ModalSaveChanges onSave={handleSave} />
+        <ModalNewCatalogo compact={isSmall}/>
+        <ModalNewValor compact={isSmall}/>
+        <ModalDeleteCatalogo compact={isSmall}/>
+        <ModalUpdateCatalogo label={selectedLabel} compact={isSmall}/>
+        <ToolbarSpacer/>
+        <ModalSaveChanges onSave={handleSave} compact={isSmall}/>
       </Toolbar>
+      
       <Input
         placeholder="Buscar etiqueta, colección o descripción..."
         showClearIcon

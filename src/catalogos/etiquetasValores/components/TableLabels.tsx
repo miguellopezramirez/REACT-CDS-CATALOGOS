@@ -246,7 +246,7 @@ function TableLabels({ data: externalData, onSelectionChange }: TableLabelsProps
       const updatedData = data.map(row => ({
         ...row,
         isSelected: row.idetiqueta === selectedRow.idetiqueta,
-        status: row.idetiqueta === selectedRow.idetiqueta ? 'Warning' : row.status
+        status: row.idetiqueta === selectedRow.idetiqueta ? 'Warning' : row.status 
       }));
 
       // Sanitize: quitar campos cliente que el backend no espera
@@ -281,7 +281,7 @@ function TableLabels({ data: externalData, onSelectionChange }: TableLabelsProps
         action: 'UPDATE',
         payload: cleanPayload
       });
-
+      
       setLabels(updatedData);
     } else {
       console.log('Limpiando selección');

@@ -28,7 +28,11 @@ const initialFormState = {
   ROUTE: "",
 };
 
-function ModalNewValor() {
+interface ModalNewValorProps {
+    compact?: boolean;
+}
+
+function ModalNewValor({ compact = false }: ModalNewValorProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [formData, setFormData] = useState(initialFormState);
@@ -178,8 +182,8 @@ function ModalNewValor() {
 
   return (
     <>
-      <Button design="Emphasized" icon="add" onClick={openModal}>
-        Crear Nuevo Valor
+      <Button design="Emphasized" icon="add" onClick={openModal} accessibleName="Crear Nuevo Valor">
+        {!compact && 'Crear Nuevo Valor'}
       </Button>
       <Dialog
         open={isModalOpen}
