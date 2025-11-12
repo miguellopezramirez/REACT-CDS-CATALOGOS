@@ -160,7 +160,6 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
                 placeholder={placeholder || 'Seleccionar...'}
                 icon={<Icon
                     name="value-help"
-                    interactive // <-- Es bueno tener esto para la accesibilidad
                     onClick={handleOpenDialog}
                     style={{ cursor: 'pointer' }}
                 />}
