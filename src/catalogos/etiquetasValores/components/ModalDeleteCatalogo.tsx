@@ -62,4 +62,4 @@ function ModalDeleteCatalogo({ compact = false, label, onDeleteConfirm }: ModalD
     );
 }
 
-export default ModalDeleteCatalogo;g
+export default ModalDeleteCatalogo;
