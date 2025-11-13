@@ -52,6 +52,9 @@ function ModalNewCatalogo({ compact = false }: ModalNewCatalogoProps) {
     } else if (typeof data.IDETIQUETA !== 'string') {
       newErrors.IDETIQUETA = 'Debe ser texto.';
     }
+    if (!data.IDSOCIEDAD) {
+      newErrors.IDSOCIEDAD = 'IDSOCIEDAD es requerido.';
+    }
     if (!data.IDCEDI) {
       newErrors.IDCEDI = 'IDCEDI es requerido.';
     }
@@ -113,7 +116,7 @@ function ModalNewCatalogo({ compact = false }: ModalNewCatalogoProps) {
     }
 
     setFormData(prevState => {
-      const converted = (name === 'SECUENCIA' || name === 'IDSOCIEDAD' || name === 'IDCEDI')
+      const converted = (name === 'SECUENCIA')
         ? (Number(value) || 0)
         : value;
 
@@ -185,7 +188,7 @@ function ModalNewCatalogo({ compact = false }: ModalNewCatalogoProps) {
 
           <FormItem labelContent={<Label required>IDSOCIEDAD</Label>}>
             <Input
-              type="Number"
+              
               name="IDSOCIEDAD"
               value={formData.IDSOCIEDAD}
               onInput={handleChange}
@@ -196,7 +199,7 @@ function ModalNewCatalogo({ compact = false }: ModalNewCatalogoProps) {
 
           <FormItem labelContent={<Label required>IDCEDI</Label>}>
             <Input
-              type="Number"
+              
               name="IDCEDI"
               value={formData.IDCEDI}
               onInput={handleChange}
