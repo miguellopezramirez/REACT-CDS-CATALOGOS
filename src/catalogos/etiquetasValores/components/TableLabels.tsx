@@ -1,9 +1,11 @@
+// src/catalogos/etiquetasValores/components/TableLabels.tsx
+
 import { useEffect, useState, useRef } from 'react';
 // Importación necesaria para mover el popover fuera de la jerarquía de la tabla
 import { createPortal } from 'react-dom';
 import { AnalyticalTable, AnalyticalTableHooks, AnalyticalTableSelectionMode, Token, Tokenizer } from '@ui5/webcomponents-react';
 import { fetchLabels, TableParentRow } from '../services/labelService';
-import { subscribe, getLabels, setLabels, addOperation } from '../store/labelStore';
+import { subscribe, getLabels, setLabels } from '../store/labelStore';
 
 
 // Componente generalizado para la celda con Tooltip/Popover flotante
@@ -269,7 +271,7 @@ const columns = [
 
 interface TableLabelsProps {
   data?: TableParentRow[];
-  onSelectionChange?: (label: TableParentRow | null) => void;
+  onSelectionChange?: (labels: TableParentRow[]) => void;
 }
 
 function TableLabels({ data: externalData, onSelectionChange }: TableLabelsProps) {
@@ -312,55 +314,25 @@ function TableLabels({ data: externalData, onSelectionChange }: TableLabelsProps
 
   const handleSelectionChange = (e: any) => {
       if (e?.detail?.row?.original && onSelectionChange) {
-          const selectedRow = e.detail.row.original;
-          console.log('Seleccionando etiqueta:', selectedRow);
-          onSelectionChange(selectedRow);
-  
-          // Mantener sólo selección visual, sin marcar Warning
-          const updatedData = data.map(row => ({
-              ...row,
-              isSelected: row.idetiqueta === selectedRow.idetiqueta
-              // REMOVIDO: status 'Warning' al seleccionar
-              // status: row.idetiqueta === selectedRow.idetiqueta ? 'Warning' : row.status 
-          }));
-  
-          // Sanitize: quitar campos cliente que el backend no espera
-          const sanitizePayload = (obj: any) => {
-            if (!obj) return obj;
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { parent, isSelected, status, subRows, ...rest } = obj;
-  
-            // CAMBIO: Mapear a la estructura { id, updates }
-            return {
-              id: rest.idetiqueta, // El ID va afuera
-              updates: { // El objeto de actualizaciones
-                IDSOCIEDAD: Number(rest.idsociedad) || 0,
-                IDCEDI: Number(rest.idcedi) || 0,
-                ETIQUETA: rest.etiqueta,
-                INDICE: rest.indice,
-                COLECCION: rest.coleccion,
-                SECCION: rest.seccion,
-                SECUENCIA: Number(rest.secuencia) || 0,
-                IMAGEN: rest.imagen,
-                ROUTE: rest.ruta,
-                DESCRIPCION: rest.descripcion
-              }
-            };
-          };
-  
-          // REMOVIDO: construcción de payload y creación de operación en selección
-          // const cleanPayload = sanitizePayload(selectedRow);
-          // addOperation({
-          //   collection: 'labels',
-          //   action: 'UPDATE',
-          //   payload: cleanPayload
-          // });
-  
+          const selectedRow = e.detail.row.original as TableParentRow;
+          console.log('Toggle selección etiqueta:', selectedRow);
+
+          // Alternar selección de la fila clicada, manteniendo múltiples selecciones
+          const updatedData = data.map(row => {
+            if (row.idetiqueta === selectedRow.idetiqueta) {
+              return { ...row, isSelected: !row.isSelected };
+            }
+            return row;
+          });
+
+          // Reportar todas las filas seleccionadas al padre
+          const selectedParents = updatedData.filter(r => r.isSelected);
+          onSelectionChange(selectedParents);
+
           setLabels(updatedData);
       } else {
           console.log('Limpiando selección');
-          onSelectionChange?.(null);
-  
+          onSelectionChange?.([]);
           const updatedData = data.map(row => ({
               ...row,
               isSelected: false

@@ -1,4 +1,4 @@
-  // src/catalogos/etiquetasValores/pages/Catalogos.tsx
+// src/catalogos/etiquetasValores/pages/Catalogos.tsx
   import { useState, useEffect } from "react";
   import TableLabels from "../components/TableLabels";
   import {
@@ -19,9 +19,7 @@
 
   export default function Catalogos() {
     const [saveMessage, setSaveMessage] = useState("");
-    const [selectedLabel, setSelectedLabel] = useState<TableParentRow | null>(
-      null
-    );
+    const [selectedLabels, setSelectedLabels] = useState<TableParentRow[]>([]);
     const [labels, setLocalLabels] = useState<TableParentRow[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isSmall, setIsSmall] = useState(false);
@@ -95,13 +93,8 @@
         >
           <ModalNewCatalogo compact={isSmall}/>
           <ModalNewValor compact={isSmall}/>
-          {/* Componente ModalDeleteCatalogo actualizado para recibir el estado y el handler */}
-          <ModalDeleteCatalogo 
-              compact={isSmall}
-              label={selectedLabel}
-              onDeleteConfirm={handleDeleteLabel}
-          />
-          <ModalUpdateCatalogo label={selectedLabel} compact={isSmall}/>
+          <ModalDeleteCatalogo selectedLabels={selectedLabels} compact={isSmall}/>
+          <ModalUpdateCatalogo label={selectedLabels.length === 1 ? selectedLabels[0] : null} compact={isSmall}/>
           <ToolbarSpacer/>
           <ModalSaveChanges onSave={handleSave} compact={isSmall}/>
         </Toolbar>
@@ -123,7 +116,7 @@
             {saveMessage}
           </MessageStrip>
         )}
-        <TableLabels onSelectionChange={setSelectedLabel} data={filteredLabels} />
+        <TableLabels onSelectionChange={setSelectedLabels} data={filteredLabels} />
       </div>
     );
   }
