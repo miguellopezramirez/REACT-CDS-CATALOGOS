@@ -234,66 +234,63 @@ function TableLabels({ data: externalData, onSelectionChange }: TableLabelsProps
 
   // Component updates are managed by store
 
-  const handleSelectionChange = (e?: CustomEvent<any>) => {
-    console.log('handleSelectionChange called with:', e?.detail);
-
-    if (e?.detail?.row?.original && onSelectionChange) {
-      const selectedRow = e.detail.row.original;
-      console.log('Seleccionando etiqueta:', selectedRow);
-      onSelectionChange(selectedRow);
-
-      // Marcar la fila como seleccionada y con status de modificación pendiente
-      const updatedData = data.map(row => ({
-        ...row,
-        isSelected: row.idetiqueta === selectedRow.idetiqueta,
-        status: row.idetiqueta === selectedRow.idetiqueta ? 'Warning' : row.status 
-      }));
-
-      // Sanitize: quitar campos cliente que el backend no espera
-      const sanitizePayload = (obj: any) => {
-        if (!obj) return obj;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { parent, isSelected, status, subRows, ...rest } = obj;
-
-        // CAMBIO: Mapear a la estructura { id, updates }
-        return {
-          id: rest.idetiqueta, // El ID va afuera
-          updates: { // El objeto de actualizaciones
-            IDSOCIEDAD: Number(rest.idsociedad) || 0,
-            IDCEDI: Number(rest.idcedi) || 0,
-            ETIQUETA: rest.etiqueta,
-            INDICE: rest.indice,
-            COLECCION: rest.coleccion,
-            SECCION: rest.seccion,
-            SECUENCIA: Number(rest.secuencia) || 0,
-            IMAGEN: rest.imagen,
-            ROUTE: rest.ruta,
-            DESCRIPCION: rest.descripcion
-          }
-        };
-      };
-
-      const cleanPayload = sanitizePayload(selectedRow);
-
-      // Agregar la operación al store con payload limpio
-      addOperation({
-        collection: 'labels',
-        action: 'UPDATE',
-        payload: cleanPayload
-      });
-      
-      setLabels(updatedData);
-    } else {
-      console.log('Limpiando selección');
-      onSelectionChange?.(null);
-
-      // Limpiar la selección
-      const updatedData = data.map(row => ({
-        ...row,
-        isSelected: false
-      }));
-      setLabels(updatedData);
-    }
+  const handleSelectionChange = (e: any) => {
+      if (e?.detail?.row?.original && onSelectionChange) {
+          const selectedRow = e.detail.row.original;
+          console.log('Seleccionando etiqueta:', selectedRow);
+          onSelectionChange(selectedRow);
+  
+          // Mantener sólo selección visual, sin marcar Warning
+          const updatedData = data.map(row => ({
+              ...row,
+              isSelected: row.idetiqueta === selectedRow.idetiqueta
+              // REMOVIDO: status 'Warning' al seleccionar
+              // status: row.idetiqueta === selectedRow.idetiqueta ? 'Warning' : row.status 
+          }));
+  
+          // Sanitize: quitar campos cliente que el backend no espera
+          const sanitizePayload = (obj: any) => {
+            if (!obj) return obj;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { parent, isSelected, status, subRows, ...rest } = obj;
+  
+            // CAMBIO: Mapear a la estructura { id, updates }
+            return {
+              id: rest.idetiqueta, // El ID va afuera
+              updates: { // El objeto de actualizaciones
+                IDSOCIEDAD: Number(rest.idsociedad) || 0,
+                IDCEDI: Number(rest.idcedi) || 0,
+                ETIQUETA: rest.etiqueta,
+                INDICE: rest.indice,
+                COLECCION: rest.coleccion,
+                SECCION: rest.seccion,
+                SECUENCIA: Number(rest.secuencia) || 0,
+                IMAGEN: rest.imagen,
+                ROUTE: rest.ruta,
+                DESCRIPCION: rest.descripcion
+              }
+            };
+          };
+  
+          // REMOVIDO: construcción de payload y creación de operación en selección
+          // const cleanPayload = sanitizePayload(selectedRow);
+          // addOperation({
+          //   collection: 'labels',
+          //   action: 'UPDATE',
+          //   payload: cleanPayload
+          // });
+  
+          setLabels(updatedData);
+      } else {
+          console.log('Limpiando selección');
+          onSelectionChange?.(null);
+  
+          const updatedData = data.map(row => ({
+              ...row,
+              isSelected: false
+          }));
+          setLabels(updatedData);
+      }
   };
 
   return <>
