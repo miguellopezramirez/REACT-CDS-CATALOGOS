@@ -80,7 +80,7 @@ export const addOperation = (operation: Operation) => {
             imagen: updates.IMAGEN,
             ruta: updates.ROUTE, // 'ruta' en el estado local, 'ROUTE' en el payload
             descripcion: updates.DESCRIPCION,
-            status: 'Warning',
+            status: 'Critical',
             subRows: label.subRows
           };
           console.log('Etiqueta actualizada (estado local):', JSON.stringify(updatedLabel));
