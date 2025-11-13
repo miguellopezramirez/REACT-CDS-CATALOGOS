@@ -3,7 +3,7 @@ import { Button, MessageBox, MessageBoxType, MessageBoxAction } from '@ui5/webco
 import { Modals } from '@ui5/webcomponents-react/Modals';
 import { saveChanges } from '../services/labelService';
 import { useState } from 'react';
-import { clearStatuses } from '../store/labelStore';
+import { clearStatuses, getLabels, setLabels } from '../store/labelStore';
 
 interface ModalSaveChangesProps {
     onSave: () => void;
@@ -16,6 +16,15 @@ function ModalSaveChanges({ onSave, compact = false }: ModalSaveChangesProps) {
     const handleSaveChanges = async () => {
         const result = await saveChanges();
         if (result.success) {
+            const currentLabels = getLabels();
+
+            const activeLabels = currentLabels.filter(label => label.status !== 'Negative');
+
+            setLabels(activeLabels);
+
+            clearStatuses(); 
+            
+            // --- FIN DEL CAMBIO ---   
             clearStatuses(); // Clear statuses on successful save
             Modals.showMessageBox({
                 type: MessageBoxType.Success,

@@ -1,52 +1,65 @@
-// src/catalogos/etiquetasValores/components/ModalDeleteCatalogo.tsx
-
-import { Button, MessageBoxType, } from '@ui5/webcomponents-react';
-import { Modals } from '@ui5/webcomponents-react/Modals';
-import { TableParentRow } from '../services/labelService'; // Importar TableParentRow
+import { useState } from 'react';
+import { Button, MessageBox } from '@ui5/webcomponents-react';
+import { TableParentRow } from '../services/labelService'; 
 
 interface ModalDeleteCatalogoProps {
     compact?: boolean;
-    // Nueva prop para la etiqueta seleccionada
     label: TableParentRow | null; 
-    // Nueva prop para la función a ejecutar al confirmar la eliminación
     onDeleteConfirm: (label: TableParentRow) => void;
 }
 
-function ModalDeleteCatalogo({ compact = false, label, onDeleteConfirm }: ModalDeleteCatalogoProps){
+function ModalDeleteCatalogo({ compact = false, label, onDeleteConfirm }: ModalDeleteCatalogoProps) {
+    const [open, setOpen] = useState(false);
 
-    const handleDelete = () => {
-        if (!label) {
-            return;
-        }
+    const handleOpen = () => {
+        setOpen(true);
+    };
 
-        // Mostrar la modal de confirmación con el nombre de la etiqueta
-        // Se añade as any para evitar el error de TS2339, ya que la función devuelve una promesa.
-        (Modals.showMessageBox({
-          type: MessageBoxType.Confirm,
-          children: `¿Seguro que quieres eliminar el Catálogo: ${label.etiqueta} (ID: ${label.idetiqueta})?`
-        }) as any).then((result: string) => {
-            if (result === 'Confirm') {
-                // Si confirma, llamar al handler que agregará la operación al store
-                onDeleteConfirm(label); 
+    const handleClose = (event: any) => {
+        // --- ZONA DE SEGURIDAD ---
+        // 1. Detectamos la acción de forma segura (sin crashear)
+        // A veces viene en event.detail.action, a veces el evento mismo es la acción.
+        const action = event?.detail?.action || event?.detail || event;
+
+        console.log("DEBUG - Acción recibida del Modal:", action);
+
+        // 2. Verificamos si es "OK" (El botón de confirmar)
+        if (action === "OK" || action === "Confirm") { // Agregamos "Confirm" por si acaso
+            if (label) {
+                console.log("DEBUG - Borrando etiqueta:", label.etiqueta);
+                onDeleteConfirm(label);
             }
-        });
-    };  
+        }
+        
+        // 3. Cerramos el modal SIEMPRE, pase lo que pase
+        setOpen(false);
+    };
 
-    // Deshabilitar el botón si no hay una etiqueta seleccionada
     const isDisabled = !label;
 
-    return <>
-        <Button 
-        design="Negative"
-        icon="delete"
-        accessibleName="Eliminar Catalogo"
-        onClick={handleDelete}
-        disabled={isDisabled} // Deshabilitar si no hay selección
-      >
-          {!compact && 'Eliminar Catalogo'}
-        </Button>
-      </>;
+    return (
+        <>
+            <Button 
+                design="Negative"
+                icon="delete"
+                accessibleName="Eliminar Catalogo"
+                onClick={handleOpen}
+                disabled={isDisabled} 
+            >
+                {!compact && 'Eliminar Catalogo'}
+            </Button>
 
+            <MessageBox
+                open={open}
+                onClose={handleClose}
+                // Usamos el string directo para evitar líos de tipos
+                type={"Confirm" as any}
+                titleText="Confirmar Eliminación" 
+            >
+                {label ? `¿Seguro que quieres eliminar el Catálogo: ${label.etiqueta}?` : ''}
+            </MessageBox>
+        </>
+    );
 }
 
-export default ModalDeleteCatalogo;
+export default ModalDeleteCatalogo;g
