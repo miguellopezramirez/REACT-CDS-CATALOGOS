@@ -64,6 +64,7 @@ export interface TableSubRow {
     ruta: string | null;
     descripcion: string;
     status?: string;
+    isSelected?: boolean
     // Propiedades heredadas del padre
     indice: string;
     coleccion: string;
@@ -83,6 +84,7 @@ export interface TableParentRow {
     ruta: string;
     descripcion: string;
     status?: string;
+    isSelected?: boolean
     subRows: TableSubRow[];
 }
 const transformData = (labels: ApiLabel[]): TableParentRow[] => {

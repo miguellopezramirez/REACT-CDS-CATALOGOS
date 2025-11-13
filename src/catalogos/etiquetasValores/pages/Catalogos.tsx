@@ -23,6 +23,7 @@
     const [labels, setLocalLabels] = useState<TableParentRow[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isSmall, setIsSmall] = useState(false);
+    
 
     useEffect(() => {
       fetchLabels().then((transformedData) => {
@@ -66,7 +67,7 @@
             }
         });
         // Limpiar la selección actual para deshabilitar el botón y no afectar otras operaciones
-        setSelectedLabel(null);
+        setSelectedLabels([]);
     };
 
     const filteredLabels = labels.filter((label) => {
@@ -93,7 +94,7 @@
         >
           <ModalNewCatalogo compact={isSmall}/>
           <ModalNewValor compact={isSmall}/>
-          <ModalDeleteCatalogo selectedLabels={selectedLabels} compact={isSmall}/>
+          <ModalDeleteCatalogo label={selectedLabels[0]} compact={isSmall} onDeleteConfirm={handleDeleteLabel} />
           <ModalUpdateCatalogo label={selectedLabels.length === 1 ? selectedLabels[0] : null} compact={isSmall}/>
           <ToolbarSpacer/>
           <ModalSaveChanges onSave={handleSave} compact={isSmall}/>
