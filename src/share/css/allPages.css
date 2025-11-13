@@ -16,7 +16,8 @@ head {
   height: 100%;
   width: 100%;
   /* FIC: quitar */
-  background-color: #ee04a8;
+  /* Se eliminan los fondos de depuración para permitir que el tema UI5 (sapBackgroundColor) funcione. */
+  /* background-color: #ee04a8; */ 
 }
 #div-app {
     display: flexbox;
@@ -24,7 +25,7 @@ head {
     height: 100%;;
     width: 100%;
     /* FIC: quitar */
-    background-color: #2bee04;
+    /* background-color: #2bee04; */
   }
   
   #div-footer {

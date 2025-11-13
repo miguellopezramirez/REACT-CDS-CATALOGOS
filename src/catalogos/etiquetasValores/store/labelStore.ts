@@ -1,8 +1,7 @@
-
 // src/catalogos/etiquetasValores/store/labelStore.ts
 import { TableParentRow, TableSubRow } from "../services/labelService";
 
-export type Action = 'CREATE' | 'UPDATE' | 'DELETE';
+export type Action = 'CREATE' | 'UPDATE' | 'DELETE' | 'NONE';
 
 export interface Operation {
   collection: 'labels' | 'values';
@@ -86,6 +85,22 @@ export const addOperation = (operation: Operation) => {
           };
           console.log('Etiqueta actualizada (estado local):', JSON.stringify(updatedLabel));
           return updatedLabel;
+        }
+        return label;
+      });
+      
+    } else if (operation.collection === 'labels' && operation.action === 'DELETE') { // <-- LÓGICA DE ELIMINACIÓN
+      console.log('Iniciando operación DELETE para una Etiqueta');
+      const targetId = operation.payload.id; 
+
+      labels = labels.map(label => {
+        if (label.idetiqueta === targetId) {
+          console.log('Marcada etiqueta para eliminación:', targetId);
+          // Marcar con status 'Negative' (rojo) para indicar eliminación pendiente
+          return {
+            ...label, 
+            status: 'Negative', // Usamos 'Negative' para el resaltado visual de eliminación
+          };
         }
         return label;
       });
