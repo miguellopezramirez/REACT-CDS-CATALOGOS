@@ -348,10 +348,10 @@ function TableLabels({ data: externalData, onSelectionChange }: TableLabelsProps
           }
         };
       };
-
+      
       const cleanPayload = sanitizePayload(selectedRow);
 
-      // Agregar la operación al store con payload limpio
+       //Agregar la operación al store con payload limpio
       addOperation({
         collection: 'labels',
         action: 'UPDATE',
