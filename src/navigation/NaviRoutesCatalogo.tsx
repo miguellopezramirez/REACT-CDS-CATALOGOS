@@ -8,6 +8,8 @@ import Payments from "../catalogos/payments/pages/Payments";
 import Shippings from "../catalogos/shippings/pages/Shippings";
 import Inventories from "../catalogos/inventories/pages/Inventories";
 import Settings from "../catalogos/settings/pages/Settings";
+// FIC: Nueva Importación para la página de prueba
+import NestedTableTest from "../catalogos/nestedTableTest/pages/NestedTableTest";
 //FIC: Share 
 import Error from "../share/errors/pages/Error.js";
 
@@ -52,6 +54,11 @@ const router = createBrowserRouter([
         {
             path: "settings",
             element: <Settings />,
+        },
+        // FIC: Ruta de prueba para la tabla anidada
+        {
+            path: "nested-tables",
+            element: <NestedTableTest />,
         },
       ],
     },

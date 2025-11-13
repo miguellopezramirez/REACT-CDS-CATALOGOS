@@ -1,5 +1,3 @@
-// src/catalogos/etiquetasValores/components/TableLabels.tsx
-
 import { useEffect, useState, useRef } from 'react';
 // Importación necesaria para mover el popover fuera de la jerarquía de la tabla
 import { createPortal } from 'react-dom';
@@ -18,7 +16,9 @@ const CellTooltip = ({ value }: { value: string | number | null | undefined }) =
   }
 
   const cellRef = useRef<HTMLDivElement>(null);
-  const [popoverPosition, setPopoverPosition] = useState<{ x: number, y: number } | null>(null);
+  // Modificar: Guardar la posición (x, y) y si debe anclarse a la derecha o izquierda
+  const [popoverPosition, setPopoverPosition] = useState<{ x: number, y: number, flipX: boolean } | null>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
 
   // Estilos base para la celda (trunca el texto)
   const baseStyle: React.CSSProperties = {
@@ -28,26 +28,123 @@ const CellTooltip = ({ value }: { value: string | number | null | undefined }) =
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-    cursor: 'default',
     padding: '0.25rem 0.5rem',
     boxSizing: 'border-box',
+    // Si está truncado, el cursor es de ayuda
+    cursor: isTruncated ? 'help' : 'default',
   };
 
-  const handleMouseEnter = () => {
+  useEffect(() => {
     if (cellRef.current) {
-      const rect = cellRef.current.getBoundingClientRect();
-      // Captura la posición de la esquina superior derecha de la celda
-      setPopoverPosition({
-        x: rect.right,
-        y: rect.top,
-      });
+        // Detectar truncamiento: si el contenido es más ancho que el contenedor visible.
+        const { scrollWidth, clientWidth } = cellRef.current;
+        const truncated = scrollWidth > clientWidth;
+        setIsTruncated(truncated);
+        
+        // Si el valor cambia y ya no está truncado, asegura el cierre del popover
+        if (!truncated && popoverPosition) {
+             setPopoverPosition(null);
+        }
     }
+  }, [valueStr, popoverPosition]);
+
+  const handleMouseEnter = () => {
+    // *** SOLO MOSTRAR si está truncado ***
+    if (!cellRef.current || !isTruncated) { 
+        setPopoverPosition(null);
+        return;
+    }
+
+    const rect = cellRef.current.getBoundingClientRect();
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const popoverMaxWidth = 400; // Define el ancho máximo del popover
+    const margin = 10; // Margen de seguridad para bordes de pantalla
+    const estimatedPopoverHeight = 200; // Estimación simple para la lógica vertical
+    
+    // Lógica de posicionamiento y "volteo"
+    const availableSpaceRight = screenWidth - rect.right;
+    const availableSpaceLeft = rect.left;
+    
+    let x = 0;
+    let y = rect.top; // Anclaje inicial al top de la celda
+    let flipX = false; // Indica si se despliega a la izquierda (true) o derecha (false)
+
+    // 1. Posicionamiento Horizontal (Volteo X): Priorizar derecha
+    if (availableSpaceRight >= popoverMaxWidth + margin) {
+        x = rect.right + 5; // 5px offset a la derecha
+        flipX = false;
+    } else if (availableSpaceLeft >= popoverMaxWidth + margin) {
+        x = rect.left - 5; // 5px offset a la izquierda
+        flipX = true;
+    } else if (availableSpaceLeft > availableSpaceRight) {
+        // No hay suficiente espacio, pero el izquierdo tiene más
+        x = rect.left - 5;
+        flipX = true;
+    } else {
+        // La derecha es la mejor opción
+        x = rect.right + 5;
+        flipX = false;
+    }
+
+    // 2. Posicionamiento Vertical (Ajuste para visibilidad en el fondo):
+    // Si la parte inferior del popover se saldría de la pantalla o está cerca del borde
+    if ((rect.top + estimatedPopoverHeight) > (screenHeight - margin)) { 
+        y = rect.bottom; // Anclaje al borde inferior de la celda
+    } else {
+        y = rect.top; // Anclaje al borde superior de la celda
+    }
+    
+    setPopoverPosition({ x, y, flipX });
   };
 
   const handleMouseLeave = () => {
     setPopoverPosition(null);
   };
+  
+  // Calcular los estilos de posición y transformación para el popover
+const popoverStyle: React.CSSProperties = popoverPosition ? (() => {
+    const screenHeight = window.innerHeight;
+    const margin = 10;
+    const currentRect = cellRef.current?.getBoundingClientRect();
 
+    const transformX = popoverPosition.flipX ? '-100%' : '0';
+    let transformY = '-1px';
+
+    if (currentRect && popoverPosition.y === currentRect.bottom) {
+         transformY = '-100%';
+    }
+    
+    const transform = `translate(${transformX}, ${transformY})`;
+    
+    return { 
+      position: 'fixed',
+      zIndex: 100000,
+      whiteSpace: 'pre-wrap', 
+      overflow: 'visible',
+      width: 'max-content',
+      // ** MODIFICACIÓN CLAVE: Permite romper palabras largas **
+      wordBreak: 'break-word', 
+      // Se eliminó minWidth, lo cual era la corrección para el popover grande
+      // Si se necesita un mínimo, se puede establecer aquí (ej. '100px'), pero para auto-ajuste es mejor omitir.
+      // minWidth: '100px',
+      maxWidth: '400px', 
+      height: 'auto',
+      backgroundColor: 'var(--sapBackgroundColor, white)',
+      border: '1px solid var(--sapField_BorderColor, #888)',
+      boxShadow: '0 5px 10px rgba(0,0,0,0.3)',
+      padding: '0.5rem',
+      borderRadius: '4px', 
+      
+      left: popoverPosition.x,
+      top: popoverPosition.y,
+      transform: transform,
+      
+      maxHeight: `calc(${screenHeight - margin * 2}px)`, 
+      overflowY: 'auto', 
+    };
+  })() : {};
+  // *** FIN DE LA CORRECCIÓN DE SINTAXIS ***
   return (
     <div
       ref={cellRef}
@@ -60,28 +157,7 @@ const CellTooltip = ({ value }: { value: string | number | null | undefined }) =
       {/* El Portal: renderiza el popover en el document.body, asegurando que flote libremente */}
       {popoverPosition && createPortal(
         <div
-          style={{
-            position: 'fixed',
-            zIndex: 100000, // Z-index extremadamente alto para superponerse a todo
-            whiteSpace: 'pre-wrap', // Permite que el texto se envuelva y expanda verticalmente
-            overflow: 'visible',
-            width: 'max-content', // El ancho se ajusta al contenido
-            minWidth: '300px',
-            maxWidth: '400px', // Límite para que no se extienda demasiado
-            height: 'auto',
-            backgroundColor: 'var(--sapBackgroundColor, white)',
-            border: '1px solid var(--sapField_BorderColor, #888)',
-            boxShadow: '0 5px 10px rgba(0,0,0,0.3)',
-            padding: '0.5rem',
-
-            // Posiciona el popover con base en la esquina superior derecha de la celda de la tabla
-            left: popoverPosition.x,
-            top: popoverPosition.y,
-
-            // Desplazamiento clave: mueve el popover a la izquierda por su propio ancho (100%) y 
-            // un ajuste vertical de -1px para alinearse perfectamente con el borde superior de la celda.
-            transform: 'translate(calc(-100% + 2px), -1px)',
-          }}
+          style={popoverStyle}
         >
           {valueStr}
         </div>,
