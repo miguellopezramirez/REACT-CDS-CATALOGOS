@@ -1,8 +1,7 @@
-
 // src/catalogos/etiquetasValores/store/labelStore.ts
 import { TableParentRow, TableSubRow } from "../services/labelService";
 
-export type Action = 'CREATE' | 'UPDATE' | 'DELETE';
+export type Action = 'CREATE' | 'UPDATE' | 'DELETE' | 'NONE';
 
 export interface Operation {
   collection: 'labels' | 'values';
@@ -81,11 +80,27 @@ export const addOperation = (operation: Operation) => {
             imagen: updates.IMAGEN,
             ruta: updates.ROUTE, // 'ruta' en el estado local, 'ROUTE' en el payload
             descripcion: updates.DESCRIPCION,
-            status: 'Warning',
+            status: 'Critical',
             subRows: label.subRows
           };
           console.log('Etiqueta actualizada (estado local):', JSON.stringify(updatedLabel));
           return updatedLabel;
+        }
+        return label;
+      });
+      
+    } else if (operation.collection === 'labels' && operation.action === 'DELETE') { // <-- LÓGICA DE ELIMINACIÓN
+      console.log('Iniciando operación DELETE para una Etiqueta');
+      const targetId = operation.payload.id; 
+
+      labels = labels.map(label => {
+        if (label.idetiqueta === targetId) {
+          console.log('Marcada etiqueta para eliminación:', targetId);
+          // Marcar con status 'Negative' (rojo) para indicar eliminación pendiente
+          return {
+            ...label, 
+            status: 'Negative', // Usamos 'Negative' para el resaltado visual de eliminación
+          };
         }
         return label;
       });
@@ -151,4 +166,14 @@ export const clearStatuses = () => {
     return newLabel;
   });
   notifyListeners();
+};
+
+/**
+ * Limpia la caché de etiquetas en memoria.
+ * Esto forzará a fetchLabels a realizar una nueva llamada a la API.
+ */
+export const clearLabelsCache = () => {
+  console.log("Limpiando caché de etiquetas en memoria...");
+  labels = []; // Vacía el array de etiquetas
+  notifyListeners(); // Notifica a los componentes (ej. la tabla) que los datos cambiaron
 };

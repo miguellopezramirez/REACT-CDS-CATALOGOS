@@ -1,6 +1,7 @@
 
 // src/catalogos/etiquetasValores/services/labelService.ts
 import { getLabels, setLabels, getOperations, clearOperations } from '../store/labelStore';
+import { getDbServer } from '../../../share/services/settingsService';
 // Interfaces para la respuesta de la API
 export interface ApiDetailRowReg {
     CURRENT: boolean;
@@ -63,6 +64,7 @@ export interface TableSubRow {
     ruta: string | null;
     descripcion: string;
     status?: string;
+    isSelected?: boolean
     // Propiedades heredadas del padre
     indice: string;
     coleccion: string;
@@ -82,22 +84,23 @@ export interface TableParentRow {
     ruta: string;
     descripcion: string;
     status?: string;
+    isSelected?: boolean
     subRows: TableSubRow[];
 }
 const transformData = (labels: ApiLabel[]): TableParentRow[] => {
     return labels.map((label) => {
         const subRows: TableSubRow[] = (label.valores || []).map((valor) => ({
-            idsociedad: valor.IDSOCIEDAD.toString(),
-            idcedi: valor.IDCEDI.toString(),
-            idetiqueta: valor.IDETIQUETA,
-            idvalor: valor.IDVALOR,
-            idvalorpa: valor.IDVALORPA,
-            valor: valor.VALOR,
-            alias: valor.ALIAS,
-            secuencia: valor.SECUENCIA,
-            imagen: valor.IMAGEN,
-            ruta: valor.ROUTE,
-            descripcion: valor.DESCRIPCION,
+            idsociedad: valor.IDSOCIEDAD?.toString() || '',
+            idcedi: valor.IDCEDI?.toString() || '',
+            idetiqueta: valor.IDETIQUETA || '',
+            idvalor: valor.IDVALOR || '',
+            idvalorpa: valor.IDVALORPA || null,
+            valor: valor.VALOR || '',
+            alias: valor.ALIAS || '',
+            secuencia: valor.SECUENCIA || 0,
+            imagen: valor.IMAGEN || null,
+            ruta: valor.ROUTE || null,
+            descripcion: valor.DESCRIPCION || '',
             // Heredar de la etiqueta padre
             indice: label.INDICE || '',
             coleccion: label.COLECCION || '',
@@ -105,8 +108,8 @@ const transformData = (labels: ApiLabel[]): TableParentRow[] => {
         }));
         return {
             parent: true,
-            idsociedad: label.IDSOCIEDAD.toString(),
-            idcedi: label.IDCEDI.toString(),
+            idsociedad: label.IDSOCIEDAD?.toString() || '',
+            idcedi: label.IDCEDI?.toString() || '',
             idetiqueta: label.IDETIQUETA,
             etiqueta: label.ETIQUETA,
             indice: label.INDICE || '',
@@ -126,7 +129,13 @@ export const fetchLabels = async (): Promise<TableParentRow[]> => {
         return storedLabels;
     }
     try {
-        const response = await fetch('http://localhost:3034/api/cat/crudLabelsValues?ProcessType=GetAll&LoggedUser=MIGUELLOPEZ&DBServer=MongoDB', {
+        const dbServer = getDbServer(); // Obtiene la DB seleccionada
+        // Construye la URL dinámicamente
+        const apiUrl = `http://localhost:3034/api/cat/crudLabelsValues?ProcessType=GetAll&LoggedUser=MIGUELLOPEZ&DBServer=${dbServer}`;
+        
+        console.log(`Fetching labels from: ${apiUrl}`); // Para depuración
+
+        const response = await fetch(apiUrl, { // Usa la URL dinámica
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -157,7 +166,13 @@ export const saveChanges = async () => {
 
     try {
         console.log("operations:", JSON.stringify(operations , null ,2))
-        const response = await fetch('http://localhost:3034/api/cat/crudLabelsValues?ProcessType=CRUD&LoggedUser=MIGUELLOPEZ&DBServer=MongoDB', {
+        const dbServer = getDbServer(); // Obtiene la DB seleccionada
+        // Construye la URL dinámicamente
+        const apiUrl = `http://localhost:3034/api/cat/crudLabelsValues?ProcessType=CRUD&LoggedUser=MIGUELLOPEZ&DBServer=${dbServer}`;
+
+        console.log(`Saving changes to: ${apiUrl}`); // Para depuración
+
+        const response = await fetch(apiUrl, { // Usa la URL dinámica
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
