@@ -32,7 +32,51 @@ export const setLabels = (newLabels: TableParentRow[]) => {
 };
 
 export const addOperation = (operation: Operation) => {
-  operations.push(operation); // Agregar la operación al historial
+  let merged = false;
+
+  // Solo nos interesa combinar si es una ACTUALIZACIÓN
+  if (operation.action === 'UPDATE') {
+    const itemId = operation.payload.id;
+    const collection = operation.collection;
+
+    const existingUpdateOp = operations.find(op =>
+      op.action === 'UPDATE' &&
+      op.collection === collection &&
+      op.payload.id === itemId
+    );
+
+    if (existingUpdateOp) {
+      // SÍ: Encontramos un 'UPDATE' previo.
+      console.log('Combinando operación UPDATE para el item:', itemId);
+      // Simplemente reemplazamos los 'updates' viejos con los nuevos.
+      existingUpdateOp.payload.updates = operation.payload.updates;
+      // Y actualizamos el IDETIQUETA (para el store) por si acaso
+      existingUpdateOp.payload.IDETIQUETA = operation.payload.IDETIQUETA;
+
+      merged = true;
+
+    } else {
+      const existingCreateOp = operations.find(op =>
+        op.action === 'CREATE' &&
+        op.collection === collection &&
+        // El ID de un 'CREATE' está dentro del payload
+        (collection === 'labels' ? op.payload.IDETIQUETA : op.payload.IDVALOR) === itemId
+      );
+
+      if (existingCreateOp) {
+        // SÍ: Encontramos un 'CREATE' previo.
+        console.log('Combinando UPDATE en operación CREATE para el item:', itemId);
+        // Combinamos los 'updates' (del UPDATE) en el payload (del CREATE)
+        existingCreateOp.payload = { ...existingCreateOp.payload, ...operation.payload.updates };
+
+        merged = true;
+      }
+    }
+  }
+
+  if (!merged) {
+    operations.push(operation);
+  }
 
   // Actualizar el estado local según la operación
   if (operation.collection === 'labels' && operation.action === 'CREATE') {
