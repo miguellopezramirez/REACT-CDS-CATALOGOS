@@ -90,12 +90,13 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
 
         if (validate(snapshot) && parentLabel) {
             try {
+                const valorPaFinal = (snapshot.IDVALORPA === "NONE" || !snapshot.IDVALORPA) ? null : snapshot.IDVALORPA;
                 const updatePayload = {
                     id: snapshot.IDVALOR,
                     IDETIQUETA: parentLabel.idetiqueta, 
                     updates: {
                         VALOR: snapshot.VALOR,
-                        IDVALORPA: snapshot.IDVALORPA || null, 
+                        IDVALORPA: valorPaFinal, 
                         ALIAS: snapshot.ALIAS,
                         SECUENCIA: Number(snapshot.SECUENCIA) || 0,
                         IDVALORSAP: snapshot.IDVALORSAP,
@@ -124,10 +125,12 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
             return;
         }
 
+        const idValorPaInicial = valorToEdit.idvalorpa || "NONE";
+
         const formDataFromProp = {
             IDVALOR: valorToEdit.idvalor,
             VALOR: valorToEdit.valor,
-            IDVALORPA: valorToEdit.idvalorpa || "",
+            IDVALORPA: idValorPaInicial,
             ALIAS: valorToEdit.alias || "",
             SECUENCIA: valorToEdit.secuencia.toString() || "0",
             IDVALORSAP: (valorToEdit as any).idvalorsap || "",
@@ -212,7 +215,7 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
                                 onChange={handleValorPadreChange}
                                 style={{ width: "100%" }}
                             >
-                                <Option key="none" value="">Ninguno</Option>
+                                <Option key="none" value="NONE">Ninguno</Option>
                                 {valorPadreOptions.map((valor) => (
                                     <Option key={valor.idvalor} value={valor.idvalor}>
                                         {valor.valor || ''}
