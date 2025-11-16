@@ -92,23 +92,16 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
             try {
                 const updatePayload = {
                     id: snapshot.IDVALOR,
-
+                    IDETIQUETA: parentLabel.idetiqueta, 
                     updates: {
                         VALOR: snapshot.VALOR,
-                        IDVALORPA: snapshot.IDVALORPA || null,
+                        IDVALORPA: snapshot.IDVALORPA || null, 
                         ALIAS: snapshot.ALIAS,
                         SECUENCIA: Number(snapshot.SECUENCIA) || 0,
                         IDVALORSAP: snapshot.IDVALORSAP,
                         DESCRIPCION: snapshot.DESCRIPCION,
                         IMAGEN: snapshot.IMAGEN,
                         ROUTE: snapshot.ROUTE,
-
-                        IDETIQUETA: parentLabel.idetiqueta,
-                        IDSOCIEDAD: Number(parentLabel.idsociedad),
-                        IDCEDI: Number(parentLabel.idcedi),
-                        INDICE: parentLabel.indice,
-                        COLECCION: parentLabel.coleccion,
-                        SECCION: parentLabel.seccion,
                     }
                 };
 

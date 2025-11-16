@@ -326,7 +326,6 @@ function TableLabels({ data: externalData, onSelectionChange, onValorSelectionCh
       if (isParentClick) {
         // --- LÓGICA SI SE HACE CLIC EN UN PADRE (Etiqueta) ---
         // Permite multiselección de padres
-        console.log('Toggle en Padre:', clickedRow.idetiqueta);
         const isAlreadySelected = clickedRow.isSelected;
 
         updatedData = data.map(row => {
@@ -353,7 +352,6 @@ function TableLabels({ data: externalData, onSelectionChange, onValorSelectionCh
         // Solo permite seleccionar un hijo a la vez
         const childRow = clickedRow as TableSubRow;
         const parent = data.find(p => p.idetiqueta === childRow.idetiqueta);
-        console.log('Toggle en Hijo:', childRow.idvalor);
 
         const isAlreadySelected = childRow.isSelected;
 
@@ -397,7 +395,6 @@ function TableLabels({ data: externalData, onSelectionChange, onValorSelectionCh
 
     } else {
       // --- LÓGICA SI SE DESELECCIONA TODO (clic en header) ---
-      console.log('Limpiando selección');
       onSelectionChange?.([]);
       onValorSelectionChange?.(null, null); // Limpia el hijo
 
@@ -410,6 +407,21 @@ function TableLabels({ data: externalData, onSelectionChange, onValorSelectionCh
     }
   };
 
+  const handleRowClick = (e: any) => {
+      const target = e.nativeEvent.target as HTMLElement;
+      
+      if (target.closest('[ui5-checkbox]')) {
+          return; 
+      }
+      if (e?.detail?.row?.original?.parent === true) {
+          const updatedData = data.map(row => {
+              return row; 
+          });
+          setLabels(updatedData);
+      }
+      handleSelectionChange(e);
+  };
+
   return <>
     <AnalyticalTable
       selectionMode={AnalyticalTableSelectionMode.Multiple}
@@ -417,9 +429,9 @@ function TableLabels({ data: externalData, onSelectionChange, onValorSelectionCh
       columns={columns}
       isTreeTable
       onRowSelect={(e) => {
-        console.log('Selección cambiada:', e?.detail);
         handleSelectionChange(e);
       }}
+      onRowClick={handleRowClick}
       withRowHighlight
       highlightField="status"
       tableHooks={tableHooks}

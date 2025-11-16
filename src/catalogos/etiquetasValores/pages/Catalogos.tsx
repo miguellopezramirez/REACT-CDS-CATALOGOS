@@ -126,6 +126,7 @@ export default function Catalogos() {
         </MessageStrip>
       )}
       <TableLabels
+        onSelectionChange={setSelectedLabels}
         onValorSelectionChange={(valor, parent) => {
           setSelectedValor(valor);
           setSelectedValorParent(parent);
