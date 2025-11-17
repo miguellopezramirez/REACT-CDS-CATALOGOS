@@ -4,8 +4,8 @@ import { addOperation } from '../store/labelStore';
 
 const initialFormState = {
   IDETIQUETA: '',
-  IDSOCIEDAD: '',
-  IDCEDI: '',
+  IDSOCIEDAD: 0,
+  IDCEDI: 0,
   ETIQUETA: '',
   INDICE: '',
   COLECCION: '',
@@ -52,12 +52,13 @@ function ModalNewCatalogo({ compact = false }: ModalNewCatalogoProps) {
     } else if (typeof data.IDETIQUETA !== 'string') {
       newErrors.IDETIQUETA = 'Debe ser texto.';
     }
-    if (!data.IDSOCIEDAD) {
-      newErrors.IDSOCIEDAD = 'IDSOCIEDAD es requerido.';
-    }
-    if (!data.IDCEDI) {
-      newErrors.IDCEDI = 'IDCEDI es requerido.';
-    }
+    // if (!data.IDSOCIEDAD) {
+    //   newErrors.IDSOCIEDAD = 'IDSOCIEDAD es requerido.';
+
+    // }
+    // if (!data.IDCEDI) {
+    //   newErrors.IDCEDI = 'IDCEDI es requerido.';
+    // }
     if (!data.ETIQUETA) {
       newErrors.ETIQUETA = 'ETIQUETA es requerido.';
     } else if (typeof data.ETIQUETA !== 'string') {
@@ -187,8 +188,7 @@ function ModalNewCatalogo({ compact = false }: ModalNewCatalogoProps) {
           </FormItem>
 
           <FormItem labelContent={<Label required>IDSOCIEDAD</Label>}>
-            <Input
-              
+            <StepInput
               name="IDSOCIEDAD"
               value={formData.IDSOCIEDAD}
               onInput={handleChange}
@@ -198,9 +198,9 @@ function ModalNewCatalogo({ compact = false }: ModalNewCatalogoProps) {
           </FormItem>
 
           <FormItem labelContent={<Label required>IDCEDI</Label>}>
-            <Input
-              
-              name="IDCEDI"
+           
+           <StepInput
+              name="CEDI"
               value={formData.IDCEDI}
               onInput={handleChange}
               valueState={errors.IDCEDI ? "Negative" : "None"}
