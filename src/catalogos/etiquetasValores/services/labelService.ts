@@ -24,7 +24,6 @@ export interface ApiValor {
     VALOR: string;
     ALIAS: string;
     SECUENCIA: number;
-    IDVALORSAP: string;
     DESCRIPCION: string;
     IMAGEN: string | null;
     ROUTE: string | null;

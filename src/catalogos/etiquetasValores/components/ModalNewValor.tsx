@@ -22,7 +22,6 @@ const initialFormState = {
   IDVALORPA: "",
   ALIAS: "",
   SECUENCIA: 0,
-  IDVALORSAP: "",
   DESCRIPCION: "",
   IMAGEN: "",
   ROUTE: "",
@@ -267,14 +266,6 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
               <Input
                 name="ALIAS"
                 value={formData.ALIAS}
-                onInput={handleChange}
-              />
-            </FormItem>
-
-            <FormItem labelContent={<Label>ID Valor SAP</Label>}>
-              <Input
-                name="IDVALORSAP"
-                value={formData.IDVALORSAP}
                 onInput={handleChange}
               />
             </FormItem>
