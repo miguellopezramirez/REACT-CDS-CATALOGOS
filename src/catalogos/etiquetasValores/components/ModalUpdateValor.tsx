@@ -20,7 +20,6 @@ const initialFormState = {
     IDVALORPA: "",
     ALIAS: "",
     SECUENCIA: "0",
-    IDVALORSAP: "",
     DESCRIPCION: "",
     IMAGEN: "",
     ROUTE: "",
@@ -162,7 +161,6 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
                         IDVALORPA: valorPaFinal, 
                         ALIAS: snapshot.ALIAS,
                         SECUENCIA: Number(snapshot.SECUENCIA) || 0,
-                        IDVALORSAP: snapshot.IDVALORSAP,
                         DESCRIPCION: snapshot.DESCRIPCION,
                         IMAGEN: snapshot.IMAGEN,
                         ROUTE: snapshot.ROUTE,
@@ -196,7 +194,6 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
             IDVALORPA: idValorPaInicial || "",
             ALIAS: valorToEdit.alias || "",
             SECUENCIA: valorToEdit.secuencia.toString() || "0",
-            IDVALORSAP: (valorToEdit as any).idvalorsap || "",
             DESCRIPCION: valorToEdit.descripcion || "",
             IMAGEN: valorToEdit.imagen || "",
             ROUTE: valorToEdit.ruta || "",
@@ -284,9 +281,6 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
                         </FormItem>
                         <FormItem labelContent={<Label>Alias</Label>}>
                             <Input name="ALIAS" value={formData.ALIAS} onInput={handleChange} />
-                        </FormItem>
-                        <FormItem labelContent={<Label>ID Valor SAP</Label>}>
-                            <Input name="IDVALORSAP" value={formData.IDVALORSAP} onInput={handleChange} />
                         </FormItem>
                         <FormItem labelContent={<Label>Secuencia</Label>}>
                             <Input

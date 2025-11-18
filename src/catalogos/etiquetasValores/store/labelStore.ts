@@ -170,7 +170,6 @@ export const addOperation = (operation: Operation) => {
           valor: operation.payload.VALOR,
           idvalorpa: operation.payload.IDVALORPA,
           alias: operation.payload.ALIAS,
-          idvalorsap: operation.payload.IDVALORSAP,
 
           secuencia: operation.payload.SECUENCIA,
           imagen: operation.payload.IMAGEN,
@@ -214,7 +213,6 @@ export const addOperation = (operation: Operation) => {
               idvalorpa: updates.IDVALORPA,
               alias: updates.ALIAS,
               secuencia: updates.SECUENCIA,
-              idvalorsap: (updates as any).IDVALORSAP,
               descripcion: updates.DESCRIPCION,
               imagen: updates.IMAGEN,
               ruta: updates.ROUTE,
