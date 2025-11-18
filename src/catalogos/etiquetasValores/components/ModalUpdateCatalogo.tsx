@@ -4,6 +4,7 @@ import { Button, FlexBox, FlexBoxJustifyContent, Form, FormGroup, FormItem, Inpu
 import { useState, useEffect, useRef } from 'react';
 import { addOperation } from '../store/labelStore';
 import { TableParentRow } from '../services/labelService';
+import ValidationErrorDialog from './ValidationErrorDialog';
 
 interface ModalUpdateCatalogoProps {
     label: TableParentRow | null;
@@ -37,6 +38,8 @@ function ModalUpdateCatalogo({ label, compact = false }: ModalUpdateCatalogoProp
 
     // --- Estado para la visibilidad del Modal ---
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+     const [showErrorDialog, setShowErrorDialog] = useState(false);
 
     // Este useEffect se ejecuta cuando el 'label' seleccionado (la prop) cambia
     useEffect(() => {
@@ -149,6 +152,8 @@ function ModalUpdateCatalogo({ label, compact = false }: ModalUpdateCatalogoProp
             } catch (error) {
                 console.error("Error calling update operation:", error);
             }
+        } else {
+            setShowErrorDialog(true);
         }
     };
 
@@ -163,7 +168,12 @@ function ModalUpdateCatalogo({ label, compact = false }: ModalUpdateCatalogoProp
         >
             {!compact && 'Actualizar Catalogo'}
         </Button>
-
+        <ValidationErrorDialog
+            open={showErrorDialog}
+            errors={errors}
+            onClose={() => setShowErrorDialog(false)}
+            title="Errores al Actualizar Catálogo"
+        />
         {/* El Dialog declarativo */}
         <Dialog
             open={isModalOpen}

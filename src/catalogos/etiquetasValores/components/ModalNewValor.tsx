@@ -15,6 +15,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { addOperation, getLabels, subscribe } from "../store/labelStore";
 import { TableParentRow } from "../services/labelService";
 import { ValueHelpSelector, LabelData } from "./ValueHelpSelector";
+import ValidationErrorDialog from './ValidationErrorDialog';
 
 const initialFormState = {
   IDVALOR: "",
@@ -43,6 +44,8 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
   
   // Nuevo estado para el IDVALORPA (valor padre dentro de los valores)
   const [selectedIdValorPa, setSelectedIdValorPa] = useState<string | null>(null);
+
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   useEffect(() => {
     const allLabels = getLabels();
@@ -217,6 +220,7 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
       }
     } else {
       console.log("Validation failed. Errors:", errors);
+      setShowErrorDialog(true);
     }
   };
 
@@ -242,6 +246,12 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
       <Button design="Emphasized" icon="add" onClick={openModal} accessibleName="Crear Nuevo Valor">
         {!compact && 'Crear Nuevo Valor'}
       </Button>
+      <ValidationErrorDialog
+        open={showErrorDialog}
+        errors={errors}
+        onClose={() => setShowErrorDialog(false)}
+        title="Errores al Crear Valor"
+      />
       <Dialog
         open={isModalOpen}
         headerText="Agrega un Valor"

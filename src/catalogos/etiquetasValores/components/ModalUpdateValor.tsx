@@ -13,7 +13,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { addOperation, getLabels, subscribe } from "../store/labelStore";
 import { TableParentRow, TableSubRow } from "../services/labelService";
 import { ValueHelpSelector, LabelData } from "./ValueHelpSelector";
-
+import ValidationErrorDialog from './ValidationErrorDialog';
 const initialFormState = {
     IDVALOR: "",
     VALOR: "",
@@ -37,7 +37,7 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
     const [errors, setErrors] = useState<any>({});
     const latestFormRef = useRef(initialFormState);
     const [isButtonDisabled, setIsButtonDisabled] = useState(true);
-    
+    const [showErrorDialog, setShowErrorDialog] = useState(false);
     // Estado para todas las etiquetas (necesario para el ValueHelpSelector)
     const [allLabels, setAllLabels] = useState<TableParentRow[]>([]);
     
@@ -177,6 +177,8 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
             } catch (error) {
                 console.error("Error calling update operation:", error);
             }
+        } else {
+            setShowErrorDialog(true);
         }
     };
 
@@ -225,7 +227,12 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
             >
                 {!compact && 'Actualizar Valor'}
             </Button>
-
+            <ValidationErrorDialog
+                open={showErrorDialog}
+                errors={errors}
+                onClose={() => setShowErrorDialog(false)}
+                title="Errores al Actualizar Valor"
+            />
             <Dialog
                 open={isModalOpen}
                 headerText="Actualizar Valor"

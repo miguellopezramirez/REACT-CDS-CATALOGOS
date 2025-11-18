@@ -1,6 +1,7 @@
 import { Button, Dialog, FlexBox, FlexBoxJustifyContent, Form, FormGroup, FormItem, Input, Label, StepInput, MultiInput, Token } from '@ui5/webcomponents-react';
 import { useState, useRef } from 'react';
 import { addOperation } from '../store/labelStore';
+import ValidationErrorDialog from './ValidationErrorDialog';
 
 const initialFormState = {
   IDETIQUETA: '',
@@ -24,7 +25,7 @@ function ModalNewCatalogo({ compact = false }: ModalNewCatalogoProps) {
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState<any>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
   const latestFormRef = useRef(initialFormState);
 
   const [inputValue, setInputValue] = useState('');
@@ -155,6 +156,7 @@ function ModalNewCatalogo({ compact = false }: ModalNewCatalogoProps) {
       }
     } else {
       console.log("Validation failed. Errors:", errors);
+      setShowErrorDialog(true);
     }
   };
 
@@ -162,6 +164,12 @@ function ModalNewCatalogo({ compact = false }: ModalNewCatalogoProps) {
     <Button design="Positive" icon="add" onClick={openModal} accessibleName="Crear Nuevo Catalogo">
       {!compact && 'Crear Nuevo Catalogo'}
     </Button>
+    <ValidationErrorDialog
+      open={showErrorDialog}
+      errors={errors}
+      onClose={() => setShowErrorDialog(false)}
+      title="Errores al Crear Catálogo"
+    />
     <Dialog
       open={isModalOpen}
       onClose={closeModal}
