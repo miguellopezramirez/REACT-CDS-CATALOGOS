@@ -11,6 +11,7 @@ import {
 import ModalNewCatalogo from "../components/ModalNewCatalogo";
 import ModalNewValor from "../components/ModalNewValor";
 import ModalDeleteCatalogo from "../components/ModalDeleteCatalogo";
+import ModalDeleteValor from "../components/ModalDeleteValor";
 import ModalSaveChanges from "../components/ModalSaveChanges";
 import ModalUpdateCatalogo from "../components/ModalUpdateCatalogo";
 import ModalUpdateValor from "../components/ModalUpdateValor";
@@ -54,6 +55,10 @@ export default function Catalogos() {
 
   const handleSave = () => {
     setSaveMessage("Datos guardados correctamente.");
+    fetchLabels().then((transformedData) => {
+      setLabels(transformedData.map(item => ({ ...item, isSelected: false })));
+      setLocalLabels(transformedData.map(item => ({ ...item, isSelected: false })));
+    });
     setTimeout(() => {
       setSaveMessage("");
     }, 3000);
@@ -71,6 +76,19 @@ export default function Catalogos() {
     });
     // Limpiar la selección actual para deshabilitar el botón y no afectar otras operaciones
     setSelectedLabels([]);
+  };
+
+  const handleDeleteValor = (valor: TableSubRow, parent: TableParentRow) => {
+    addOperation({
+      collection: 'values',
+      action: 'DELETE',
+      payload: {
+        id: valor.idvalor,
+        IDETIQUETA: parent.idetiqueta,
+      }
+    });
+    setSelectedValor(null);
+    setSelectedValorParent(null);
   };
 
   const filteredLabels = labels.filter((label) => {
@@ -98,6 +116,7 @@ export default function Catalogos() {
         <ModalNewCatalogo compact={isSmall} />
         <ModalNewValor compact={isSmall} />
         <ModalDeleteCatalogo label={selectedLabels[0]} compact={isSmall} onDeleteConfirm={handleDeleteLabel} />
+        <ModalDeleteValor compact={isSmall} valor={selectedValor} parentLabel={selectedValorParent} onDeleteConfirm={handleDeleteValor} />
         <ModalUpdateCatalogo label={selectedLabels.length === 1 ? selectedLabels[0] : null} compact={isSmall} />
         <ModalUpdateValor
           compact={isSmall}

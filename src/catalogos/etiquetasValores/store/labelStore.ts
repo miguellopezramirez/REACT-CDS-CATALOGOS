@@ -230,7 +230,35 @@ export const addOperation = (operation: Operation) => {
       }
       return label;
     });
-  }
+  } else if (operation.collection === 'values' && operation.action === 'DELETE') {
+  console.log('Iniciando operación DELETE para un Valor');
+
+  const valorId = operation.payload.id;
+  const parentId = operation.payload.IDETIQUETA;
+
+  labels = labels.map(label => {
+    if (label.idetiqueta === parentId && label.parent) {
+
+      const updatedSubRows = label.subRows.map(subRow => {
+        if (subRow.idvalor === valorId) {
+          console.log('Marcando valor como eliminado:', valorId);
+          return {
+            ...subRow,
+            status: 'Negative' 
+          };
+        }
+        return subRow;
+      });
+
+      return {
+        ...label,
+        subRows: updatedSubRows
+      };
+    }
+
+    return label;
+  });
+} 
 
   notifyListeners();
 };

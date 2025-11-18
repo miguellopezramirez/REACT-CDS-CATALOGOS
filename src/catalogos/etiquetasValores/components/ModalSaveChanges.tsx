@@ -3,7 +3,7 @@ import { Button, MessageBox, MessageBoxType, MessageBoxAction } from '@ui5/webco
 import { Modals } from '@ui5/webcomponents-react/Modals';
 import { saveChanges } from '../services/labelService';
 import { useState } from 'react';
-import { clearStatuses, getLabels, setLabels } from '../store/labelStore';
+import { clearStatuses, getLabels, setLabels, clearLabelsCache, clearOperations   } from '../store/labelStore';
 
 interface ModalSaveChangesProps {
     onSave: () => void;
@@ -26,6 +26,8 @@ function ModalSaveChanges({ onSave, compact = false }: ModalSaveChangesProps) {
             
             // --- FIN DEL CAMBIO ---   
             clearStatuses(); // Clear statuses on successful save
+            clearLabelsCache(); // Limpia los datos en memoria
+            clearOperations();  // Limpia las operaciones pendientes
             Modals.showMessageBox({
                 type: MessageBoxType.Success,
                 children: 'Cambios guardados con éxito.'
