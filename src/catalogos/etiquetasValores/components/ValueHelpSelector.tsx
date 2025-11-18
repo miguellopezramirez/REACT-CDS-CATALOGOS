@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect, FC } from 'react';
 import {
-    Input,
+    ComboBox,
+    ComboBoxItem,
+    ComboBoxItemGroup,
     Dialog,
     List,
     ListItemStandard,
@@ -9,15 +11,12 @@ import {
     Bar,
     Title,
     Label,
-    Icon,
     Search
 } from '@ui5/webcomponents-react';
-import type { SearchDomRef, ListDomRef } from '@ui5/webcomponents-react';
+import type { SearchDomRef, ListDomRef, ComboBoxDomRef } from '@ui5/webcomponents-react';
 import type { Ui5CustomEvent } from '@ui5/webcomponents-react-base';
 import type { ListSelectionChangeEventDetail } from '@ui5/webcomponents/dist/List.js';
-
-// (Tus interfaces TableSubRow y LabelData van aquí... están perfectas)
-// ...
+import type { ComboBoxSelectionChangeEventDetail } from '@ui5/webcomponents/dist/ComboBox.js';
 
 export interface TableSubRow {
     idsociedad: string;
@@ -41,7 +40,7 @@ export interface LabelData {
     idsociedad: string;
     idcedi: string;
     idetiqueta: string;
-    etiqueta: string; // Nombre de la etiqueta
+    etiqueta: string;
     indice: string;
     coleccion: string;
     seccion: string;
@@ -49,25 +48,18 @@ export interface LabelData {
     imagen: string | null;
     ruta: string | null;
     descripcion: string;
-    subRows: TableSubRow[]; // Array de valores
+    subRows: TableSubRow[];
 }
 
-// Props para el componente ValueHelpSelector
 export interface ValueHelpSelectorProps {
     data: LabelData[];
     value: string | null;
-    // --- AJUSTE (1) ---
-    // Habilitamos que 'onSelect' pueda recibir 'null'
     onSelect: (selectedValue: string | null) => void; 
     label?: string;
     placeholder?: string;
     required?: boolean;
 }
 
-/**
- * Busca un objeto 'valor' (TableSubRow) dentro de la estructura de datos
- * basándose en su idvalor.
- */
 function findValueById(data: LabelData[], id: string | null): TableSubRow | null {
     if (!id || !data) return null;
     for (const label of data) {
@@ -79,15 +71,10 @@ function findValueById(data: LabelData[], id: string | null): TableSubRow | null
     return null;
 }
 
-/**
- * Componente reutilizable de Ayuda de Valor (Value Help)
- * para seleccionar un valor de una estructura anidada de Etiquetas -> Valores.
- */
 export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
     data,
     value,
     onSelect,
-    label,
     placeholder,
     required = false
 }) => {
@@ -95,7 +82,6 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [displayedValue, setDisplayedValue] = useState<string>('');
 
-    // (Tu useEffect y useMemo están perfectos)
     useEffect(() => {
         if (value) {
             const selectedItem = findValueById(data, value);
@@ -105,7 +91,8 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
         }
     }, [value, data]);
 
-    const filteredData = useMemo(() => {
+    // Filtrado para la búsqueda interna (cuando el dialog está abierto)
+    const internalFilteredData = useMemo(() => {
         const lowerSearchTerm = searchTerm.toLowerCase();
         if (!lowerSearchTerm) return data; 
 
@@ -119,7 +106,32 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
             .filter(label => label.subRows.length > 0);
     }, [data, searchTerm]);
 
-    // --- Manejadores de Eventos ---
+    // Renderizar items del ComboBox agrupados
+    const renderComboBoxItems = useMemo(() => {
+        const items: JSX.Element[] = [];
+        
+        data.forEach((label) => {
+            if (label.subRows && label.subRows.length > 0) {
+                // Agregar header del grupo
+                items.push(
+                    <ComboBoxItemGroup key={`group-${label.idetiqueta}`} headerText={ label.etiqueta} />
+                );
+                
+                // Agregar valores del grupo
+                label.subRows.forEach((valor) => {
+                    items.push(
+                        <ComboBoxItem
+                            key={valor.idvalor}
+                            text={valor.valor}
+                            data-idvalor={valor.idvalor}
+                        />
+                    );
+                });
+            }
+        });
+        
+        return items;
+    }, [data]);
 
     const handleOpenDialog = () => {
         setSearchTerm('');
@@ -128,8 +140,19 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
     
     const handleCloseDialog = () => setDialogOpen(false);
 
-    const handleSearchChange = (event: Ui5CustomEvent<SearchDomRef>) => {
+    const handleInternalSearchChange = (event: Ui5CustomEvent<SearchDomRef>) => {
         setSearchTerm(event.target.value ?? '');
+    };
+
+    const handleComboBoxChange = (event: Ui5CustomEvent<ComboBoxDomRef, ComboBoxSelectionChangeEventDetail>) => {
+        const selectedItem = event.detail.item;
+        
+        if (selectedItem) {
+            const idvalor = selectedItem.dataset.idvalor;
+            if (idvalor) {
+                onSelect(idvalor);
+            }
+        }
     };
 
     const handleValueSelect = (event: Ui5CustomEvent<ListDomRef, ListSelectionChangeEventDetail>) => {
@@ -142,53 +165,69 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
         }
     };
 
-    // --- NUEVO MANEJADOR ---
-    // Para el botón "Ninguno"
     const handleClearSelect = () => {
-        onSelect(null); // Envía 'null' para limpiar el valor
+        onSelect(null);
         handleCloseDialog();
     };
 
-    // --- Renderizado ---
+    const handleClearExternal = () => {
+        onSelect(null);
+    };
 
     return (
-        <>
-            {label && <Label required={required}>{label}</Label>}
-            <Input
-                value={displayedValue}
-                readonly
-                placeholder={placeholder || 'Seleccionar...'}
-                icon={<Icon
-                    name="value-help"
+        <div style={{ width: '100%', position: 'relative' }}>
+            
+            
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch', width: '100%' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                    <ComboBox
+                        value={displayedValue}
+                        placeholder={placeholder || 'Buscar o seleccionar...'}
+                        onSelectionChange={handleComboBoxChange}
+                        style={{ width: '100%' }}
+                    >
+                        {renderComboBoxItems}
+                    </ComboBox>
+                </div>
+                
+                {/* Botón para abrir modal */}
+                <Button
+                    design="Transparent"
+                    icon="value-help"
                     onClick={handleOpenDialog}
-                    style={{ cursor: 'pointer' }}
-                />}
-            /> 
+                    tooltip="Abrir ayuda de valor"
+                    style={{ height: 'auto' }}
+                />
+                
+                {/* Botón Limpiar externo */}
+                {value && (
+                    <Button
+                        design="Transparent"
+                        icon="decline"
+                        onClick={handleClearExternal}
+                        tooltip="Limpiar selección"
+                        style={{ height: 'auto' }}
+                    />
+                )}
+            </div>
 
             <Dialog
                 open={dialogOpen}
-                onClose={handleCloseDialog} // Buena práctica
-                
-                // --- AJUSTE (2): TAMAÑO DE LA MODAL ---
-                // Le damos un ancho máximo o fijo. 
-                // '500px' es un buen punto de partida.
-                style={{ width: '500px' }} 
-
+                onClose={handleCloseDialog}
+                style={{ width: '600px', maxWidth: '90vw' }}
                 header={
                     <Bar
                         startContent={<Title>Seleccionar Valor</Title>}
                         endContent={
                             <Search
                                 placeholder="Buscar valor..."
-                                onInput={handleSearchChange}
+                                onInput={handleInternalSearchChange}
                             />
                         }
                     />
                 }
                 footer={
                     <Bar
-                        // --- AJUSTE (3): BOTÓN "NINGUNO" ---
-                        // 'startContent' pone el botón a la izquierda
                         startContent={
                             <Button
                                 design="Transparent"
@@ -207,27 +246,49 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
                     selectionMode="Single"
                     onSelectionChange={handleValueSelect}
                 >
-                    {filteredData.length === 0 && (
+                    {internalFilteredData.length === 0 && (
                         <ListItemStandard>No se encontraron resultados.</ListItemStandard>
                     )}
-                    {filteredData.map(label => (
+                    {internalFilteredData.map(label => (
                         <React.Fragment key={label.idetiqueta}>
-                            <ListItemGroup>
+                            {/* Header de grupo más compacto y sutil */}
+                            <ListItemGroup
+                                style={{
+                                    backgroundColor: '#fafafa',
+                                    padding: '0.4rem 1rem',
+                                    fontWeight: '600',
+                                    fontSize: '0.8rem',
+                                    color: '#666',
+                                    borderTop: '1px solid #e8e8e8',
+                                    borderBottom: '1px solid #e8e8e8',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px',
+                                    minHeight: 'auto'
+                                }}
+                            >
                                 {label.etiqueta}
                             </ListItemGroup>
-                            {label.subRows.map(valor => (
-                                <ListItemStandard
-                                    key={valor.idvalor}
-                                    data-idvalor={valor.idvalor}
-                                    selected={value === valor.idvalor}
-                                >
-                                    {valor.valor}
-                                </ListItemStandard>
+                            {label.subRows.map((valor, index) => (
+                                <React.Fragment key={valor.idvalor}>
+                                    <ListItemStandard
+                                        data-idvalor={valor.idvalor}
+                                        selected={value === valor.idvalor}
+                                        style={{
+                                            padding: '0.85rem 1.25rem',
+                                            borderBottom: index < label.subRows.length - 1 ? '1px solid #f5f5f5' : 'none',
+                                            fontSize: '0.95rem'
+                                        }}
+                                    >
+                                        {valor.valor}
+                                    </ListItemStandard>
+                                </React.Fragment>
                             ))}
                         </React.Fragment>
                     ))}
                 </List>
             </Dialog>
-        </>
+        </div>
     );
-};
+}; 
+
+export default ValueHelpSelector;

@@ -11,10 +11,10 @@ import {
   ComboBox,
   ComboBoxItem,
 } from "@ui5/webcomponents-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { addOperation, getLabels, subscribe } from "../store/labelStore";
 import { TableParentRow } from "../services/labelService";
-import { ValueHelpSelector } from "./ValueHelpSelector";
+import { ValueHelpSelector, LabelData } from "./ValueHelpSelector";
 
 const initialFormState = {
   IDVALOR: "",
@@ -40,6 +40,9 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
 
   const [parentLabels, setParentLabels] = useState<TableParentRow[]>([]);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
+  
+  // Nuevo estado para el IDVALORPA (valor padre dentro de los valores)
+  const [selectedIdValorPa, setSelectedIdValorPa] = useState<string | null>(null);
 
   useEffect(() => {
     const allLabels = getLabels();
@@ -54,6 +57,42 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
 
     return () => unsubscribe();
   }, []);
+
+  // Transformar parentLabels a formato LabelData para el ValueHelpSelector
+  // Esto agrupa los valores de cada etiqueta padre
+  const valueHelpData = useMemo<LabelData[]>(() => {
+    return parentLabels.map((label) => ({
+      parent: label.parent,
+      idsociedad: label.idsociedad,
+      idcedi: label.idcedi,
+      idetiqueta: label.idetiqueta,
+      etiqueta: label.etiqueta,
+      indice: label.indice,
+      coleccion: label.coleccion,
+      seccion: label.seccion,
+      secuencia: label.secuencia,
+      imagen: label.imagen,
+      ruta: label.ruta,
+      descripcion: label.descripcion,
+      // Mapear los subRows (valores) de cada etiqueta
+      subRows: (label.subRows || []).map((subRow) => ({
+        idsociedad: subRow.idsociedad,
+        idcedi: subRow.idcedi,
+        idetiqueta: subRow.idetiqueta,
+        idvalor: subRow.idvalor,
+        idvalorpa: subRow.idvalorpa,
+        valor: subRow.valor,
+        alias: subRow.alias,
+        secuencia: subRow.secuencia,
+        imagen: subRow.imagen,
+        ruta: subRow.ruta,
+        descripcion: subRow.descripcion,
+        indice: subRow.indice,
+        coleccion: subRow.coleccion,
+        seccion: subRow.seccion,
+      })),
+    }));
+  }, [parentLabels]);
 
   const validate = (data: typeof initialFormState, parentId: string | null) => {
     const newErrors: any = {};
@@ -117,6 +156,24 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
 
     const selectedId = e.detail.item.dataset.id;
     setSelectedParentId(selectedId);
+    
+    // Limpiar el IDVALORPA cuando se cambia la etiqueta padre
+    setSelectedIdValorPa(null);
+  };
+
+  // Manejador para cuando se selecciona un valor padre (IDVALORPA)
+  const handleIdValorPaSelect = (idvalor: string | null) => {
+    setSelectedIdValorPa(idvalor);
+    
+    // Actualizar el formData con el IDVALORPA seleccionado
+    setFormData((prevState) => {
+      const updatedState = {
+        ...prevState,
+        IDVALORPA: idvalor || "",
+      };
+      latestFormRef.current = updatedState;
+      return updatedState;
+    });
   };
 
   const handleSubmit = async () => {
@@ -171,6 +228,7 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
     setFormData(initialFormState);
     latestFormRef.current = initialFormState;
     setSelectedParentId(null);
+    setSelectedIdValorPa(null);
     setErrors({});
     setIsModalOpen(true);
   };
@@ -254,12 +312,13 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
             </FormItem>
 
             <FormItem labelContent={<Label>ID Valor Padre (IDVALORPA)</Label>}>
-
               <ValueHelpSelector
                 
-                data={parentLabels}
-                value={selectedParentId}
-                onSelect={setSelectedParentId}/>
+                placeholder="Buscar o seleccionar valor padre..."
+                data={valueHelpData}
+                value={selectedIdValorPa}
+                onSelect={handleIdValorPaSelect}
+              />
             </FormItem>
 
             <FormItem labelContent={<Label>Alias</Label>}>

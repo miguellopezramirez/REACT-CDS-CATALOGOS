@@ -8,12 +8,11 @@ import {
     Input,
     Label,
     Dialog,
-    Select,
-    Option
 } from "@ui5/webcomponents-react";
-import { useState, useRef, useEffect } from "react";
-import { addOperation } from "../store/labelStore";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { addOperation, getLabels, subscribe } from "../store/labelStore";
 import { TableParentRow, TableSubRow } from "../services/labelService";
+import { ValueHelpSelector, LabelData } from "./ValueHelpSelector";
 
 const initialFormState = {
     IDVALOR: "",
@@ -37,8 +36,28 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
     const [formData, setFormData] = useState(initialFormState);
     const [errors, setErrors] = useState<any>({});
     const latestFormRef = useRef(initialFormState);
-    const [valorPadreOptions, setValorPadreOptions] = useState<TableSubRow[]>([]);
     const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+    
+    // Estado para todas las etiquetas (necesario para el ValueHelpSelector)
+    const [allLabels, setAllLabels] = useState<TableParentRow[]>([]);
+    
+    // Nuevo estado para el IDVALORPA (valor padre dentro de los valores)
+    const [selectedIdValorPa, setSelectedIdValorPa] = useState<string | null>(null);
+
+    // Cargar todas las etiquetas para el ValueHelpSelector
+    useEffect(() => {
+        const labels = getLabels();
+        const parents = labels.filter((label) => label.parent);
+        setAllLabels(parents);
+
+        const unsubscribe = subscribe(() => {
+            const updatedLabels = getLabels();
+            const updatedParents = updatedLabels.filter((label) => label.parent);
+            setAllLabels(updatedParents);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         if (!valorToEdit || !parentLabel) {
@@ -73,15 +92,59 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
         if (!name) { return; }
         setFormData((prevState) => {
             const updatedState = { ...prevState, [name]: value };
-            latestFormRef.current = updatedState; // Actualiza la ref
+            latestFormRef.current = updatedState;
             return updatedState;
         });
     };
 
-    const handleValorPadreChange = (event: any) => {
-        const selectedValorId = event.target.value as string;
-        setFormData(prev => ({ ...prev, IDVALORPA: selectedValorId }));
-        latestFormRef.current = { ...latestFormRef.current, IDVALORPA: selectedValorId };
+    // Transformar allLabels a formato LabelData para el ValueHelpSelector
+    const valueHelpData = useMemo<LabelData[]>(() => {
+        return allLabels.map((label) => ({
+            parent: label.parent,
+            idsociedad: label.idsociedad,
+            idcedi: label.idcedi,
+            idetiqueta: label.idetiqueta,
+            etiqueta: label.etiqueta,
+            indice: label.indice,
+            coleccion: label.coleccion,
+            seccion: label.seccion,
+            secuencia: label.secuencia,
+            imagen: label.imagen,
+            ruta: label.ruta,
+            descripcion: label.descripcion,
+            // Mapear los subRows (valores) de cada etiqueta
+            subRows: (label.subRows || []).map((subRow) => ({
+                idsociedad: subRow.idsociedad,
+                idcedi: subRow.idcedi,
+                idetiqueta: subRow.idetiqueta,
+                idvalor: subRow.idvalor,
+                idvalorpa: subRow.idvalorpa,
+                valor: subRow.valor,
+                alias: subRow.alias,
+                secuencia: subRow.secuencia,
+                imagen: subRow.imagen,
+                ruta: subRow.ruta,
+                descripcion: subRow.descripcion,
+                indice: subRow.indice,
+                coleccion: subRow.coleccion,
+                seccion: subRow.seccion,
+            })),
+        }));
+    }, [allLabels]);
+
+    // Manejador para cuando se selecciona un valor padre (IDVALORPA)
+    const handleIdValorPaSelect = (idvalor: string | null) => {
+        setSelectedIdValorPa(idvalor);
+        
+        // Actualizar el formData con el IDVALORPA seleccionado
+        setFormData((prevState) => {
+            const updatedState = {
+                ...prevState,
+                IDVALORPA: idvalor || "",
+            };
+            latestFormRef.current = updatedState;
+            return updatedState;
+        });
     };
 
     const handleSubmit = async () => {
@@ -89,7 +152,7 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
 
         if (validate(snapshot) && parentLabel) {
             try {
-                const valorPaFinal = (snapshot.IDVALORPA === "NONE" || !snapshot.IDVALORPA) ? null : snapshot.IDVALORPA;
+                const valorPaFinal = !snapshot.IDVALORPA ? null : snapshot.IDVALORPA;
                 const updatePayload = {
                     id: snapshot.IDVALOR,
                     IDETIQUETA: parentLabel.idetiqueta, 
@@ -123,23 +186,24 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
             return;
         }
 
-        const idValorPaInicial = valorToEdit.idvalorpa || "NONE";
+        const idValorPaInicial = valorToEdit.idvalorpa || null;
 
         const formDataFromProp = {
             IDVALOR: valorToEdit.idvalor,
             VALOR: valorToEdit.valor,
-            IDVALORPA: idValorPaInicial,
+            IDVALORPA: idValorPaInicial || "",
             ALIAS: valorToEdit.alias || "",
             SECUENCIA: valorToEdit.secuencia.toString() || "0",
             DESCRIPCION: valorToEdit.descripcion || "",
             IMAGEN: valorToEdit.imagen || "",
             ROUTE: valorToEdit.ruta || "",
         };
+        
         setFormData(formDataFromProp);
         latestFormRef.current = formDataFromProp;
-
-        const options = parentLabel.subRows.filter(sub => sub.idvalor !== valorToEdit.idvalor);
-        setValorPadreOptions(options);
+        
+        // Establecer el valor inicial del ValueHelpSelector
+        setSelectedIdValorPa(idValorPaInicial);
 
         setErrors({});
         setIsButtonDisabled(false);
@@ -156,7 +220,7 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
                 design="Emphasized"
                 icon="edit"
                 onClick={openModal}
-                disabled={!valorToEdit || !parentLabel} // Deshabilitado si no hay valor seleccionado
+                disabled={!valorToEdit || !parentLabel}
                 accessibleName="Actualizar Valor"
             >
                 {!compact && 'Actualizar Valor'}
@@ -194,7 +258,7 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
                             <Input
                                 name="IDVALOR"
                                 value={formData.IDVALOR}
-                                disabled // El ID (clave primaria) no se debe editar
+                                disabled
                             />
                         </FormItem>
                         <FormItem labelContent={<Label required>Valor</Label>}>
@@ -206,19 +270,14 @@ function ModalUpdateValor({ compact = false, valorToEdit, parentLabel }: ModalUp
                                 valueStateMessage={<div slot="valueStateMessage">{errors.VALOR}</div>}
                             />
                         </FormItem>
-                        <FormItem labelContent={<Label>ID Valor Padre (IDVALORPA)</Label>}>
-                            <Select
-                                value={formData.IDVALORPA}
-                                onChange={handleValorPadreChange}
-                                style={{ width: "100%" }}
-                            >
-                                <Option key="none" value="NONE">Ninguno</Option>
-                                {valorPadreOptions.map((valor) => (
-                                    <Option key={valor.idvalor} value={valor.idvalor}>
-                                        {valor.valor || ''}
-                                    </Option>
-                                ))}
-                            </Select>
+                        <FormItem>
+                            <ValueHelpSelector
+                                label="ID Valor Padre (IDVALORPA)"
+                                placeholder="Buscar o seleccionar valor padre..."
+                                data={valueHelpData}
+                                value={selectedIdValorPa}
+                                onSelect={handleIdValorPaSelect}
+                            />
                         </FormItem>
                         <FormItem labelContent={<Label>Alias</Label>}>
                             <Input name="ALIAS" value={formData.ALIAS} onInput={handleChange} />
