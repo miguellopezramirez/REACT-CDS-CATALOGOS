@@ -10,7 +10,6 @@ import {
     Button,
     Bar,
     Title,
-    Label,
     Search
 } from '@ui5/webcomponents-react';
 import type { SearchDomRef, ListDomRef, ComboBoxDomRef } from '@ui5/webcomponents-react';
@@ -75,8 +74,7 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
     data,
     value,
     onSelect,
-    placeholder,
-    required = false
+    placeholder
 }) => {
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
     const [searchTerm, setSearchTerm] = useState<string>('');
