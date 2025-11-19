@@ -84,6 +84,7 @@ export interface TableParentRow {
     descripcion: string;
     status?: string;
     isSelected?: boolean
+    isExpanded?: boolean
     subRows: TableSubRow[];
 }
 const transformData = (labels: ApiLabel[]): TableParentRow[] => {

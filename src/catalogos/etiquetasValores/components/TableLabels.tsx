@@ -1,6 +1,6 @@
 // src/catalogos/etiquetasValores/components/TableLabels.tsx
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef , useMemo} from 'react';
 // Importación necesaria para mover el popover fuera de la jerarquía de la tabla
 import { createPortal } from 'react-dom';
 import { AnalyticalTable, AnalyticalTableHooks, AnalyticalTableSelectionMode, Token, Tokenizer } from '@ui5/webcomponents-react';
@@ -341,7 +341,7 @@ function TableLabels({ data: externalData, onSelectionChange, onValorSelectionCh
             selectedParents.push({ ...row, isSelected: true, subRows: newSubRows });
           }
 
-          return { ...row, isSelected,  subRows: newSubRows as TableSubRow[] };
+          return { ...row, isSelected, isExpanded: row.isExpanded,  subRows: newSubRows as TableSubRow[] };
         });
 
         // Si se seleccionó un padre, nos aseguramos de que no haya un hijo seleccionado
@@ -358,9 +358,11 @@ function TableLabels({ data: externalData, onSelectionChange, onValorSelectionCh
         updatedData = data.map(parentRow => {
           // Deselecciona todos los padres
           let parentIsSelected = false;
-
           let newSubRows;
+          let shouldExpand = parentRow.isExpanded;
+
           if (parentRow.idetiqueta === childRow.idetiqueta) {
+            shouldExpand = true;
             // Es el padre del hijo clicado
             newSubRows = parentRow.subRows.map(sub => {
               let childIsSelected = false;
@@ -380,7 +382,7 @@ function TableLabels({ data: externalData, onSelectionChange, onValorSelectionCh
             newSubRows = parentRow.subRows.map(sub => ({ ...sub, isSelected: false }));
           }
 
-          return { ...parentRow, isSelected: parentIsSelected, subRows: newSubRows as TableSubRow[] };
+          return { ...parentRow, isSelected: parentIsSelected, isExpanded: shouldExpand, subRows: newSubRows as TableSubRow[] };
         });
 
         // Si se seleccionó un hijo, nos aseguramos de que no haya padres seleccionados
@@ -422,6 +424,18 @@ function TableLabels({ data: externalData, onSelectionChange, onValorSelectionCh
       handleSelectionChange(e);
   };
 
+  const reactTableOptions = useMemo(() => ({
+    autoResetExpanded: false,
+    getRowId: (row: any) => {
+      
+      if (row.parent) {
+        return `parent-${row.idetiqueta}`;
+      }
+      
+      return `child-${row.idvalor}`;
+    }
+  }), []);
+
   return <>
     <AnalyticalTable
       selectionMode={AnalyticalTableSelectionMode.Multiple}
@@ -435,6 +449,8 @@ function TableLabels({ data: externalData, onSelectionChange, onValorSelectionCh
       withRowHighlight
       highlightField="status"
       tableHooks={tableHooks}
+      reactTableOptions={reactTableOptions}
+      
     />
   </>
 }
