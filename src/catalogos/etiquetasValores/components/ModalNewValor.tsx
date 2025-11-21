@@ -29,10 +29,12 @@ const initialFormState = {
 };
 
 interface ModalNewValorProps {
-    compact?: boolean;
+  compact?: boolean;
+  // NUEVO PROP: Recibimos el padre opcionalmente
+  preSelectedParent?: TableParentRow | null;
 }
 
-function ModalNewValor({ compact = false }: ModalNewValorProps) {
+function ModalNewValor({ compact = false, preSelectedParent }: ModalNewValorProps) { // <--- Desestructuramos el prop
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [formData, setFormData] = useState(initialFormState);
@@ -41,8 +43,7 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
 
   const [parentLabels, setParentLabels] = useState<TableParentRow[]>([]);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
-  
-  // Nuevo estado para el IDVALORPA (valor padre dentro de los valores)
+
   const [selectedIdValorPa, setSelectedIdValorPa] = useState<string | null>(null);
 
   const [showErrorDialog, setShowErrorDialog] = useState(false);
@@ -128,10 +129,10 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
       e && e.detail && e.detail.value !== undefined
         ? e.detail.value
         : (target &&
-            (target.value !== undefined
-              ? target.value
-              : target.getAttribute && target.getAttribute("value"))) ||
-          "";
+          (target.value !== undefined
+            ? target.value
+            : target.getAttribute && target.getAttribute("value"))) ||
+        "";
 
     if (!name) {
       console.warn('handleChange no pudo determinar el "name" del campo.');
@@ -154,12 +155,12 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
   const handleParentChange = (e: any) => {
     if (!e.detail.item) {
       setSelectedParentId(null);
-      return; 
+      return;
     }
 
     const selectedId = e.detail.item.dataset.id;
     setSelectedParentId(selectedId);
-    
+
     // Limpiar el IDVALORPA cuando se cambia la etiqueta padre
     setSelectedIdValorPa(null);
   };
@@ -167,7 +168,7 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
   // Manejador para cuando se selecciona un valor padre (IDVALORPA)
   const handleIdValorPaSelect = (idvalor: string | null) => {
     setSelectedIdValorPa(idvalor);
-    
+
     // Actualizar el formData con el IDVALORPA seleccionado
     setFormData((prevState) => {
       const updatedState = {
@@ -231,7 +232,16 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
   const openModal = () => {
     setFormData(initialFormState);
     latestFormRef.current = initialFormState;
-    setSelectedParentId(null);
+
+    // AQUÍ ESTÁ LA LÓGICA DE PRESELECCIÓN:
+    // Si nos pasaron un padre preseleccionado, usamos su ID.
+    // Si no, lo dejamos en null (como estaba antes).
+    if (preSelectedParent) {
+      setSelectedParentId(preSelectedParent.idetiqueta);
+    } else {
+      setSelectedParentId(null);
+    }
+
     setSelectedIdValorPa(null);
     setErrors({});
     setIsModalOpen(true);
@@ -270,7 +280,7 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
         <Form>
           <FormGroup headerText="Información del Catálogo">
             <FormItem labelContent={<Label required>Etiqueta Padre</Label>}>
-              <ComboBox 
+              <ComboBox
                 onSelectionChange={handleParentChange}
                 value={selectedParentData?.etiqueta || ""}
               >
@@ -323,7 +333,7 @@ function ModalNewValor({ compact = false }: ModalNewValorProps) {
 
             <FormItem labelContent={<Label>ID Valor Padre (IDVALORPA)</Label>}>
               <ValueHelpSelector
-                
+
                 placeholder="Buscar o seleccionar valor padre..."
                 data={valueHelpData}
                 value={selectedIdValorPa}

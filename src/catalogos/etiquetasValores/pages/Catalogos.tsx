@@ -153,7 +153,10 @@ export default function Catalogos() {
         }}
       >
         <ModalNewCatalogo compact={isSmall} />
-        <ModalNewValor compact={isSmall} />
+        <ModalNewValor
+          compact={isSmall}
+          preSelectedParent={selectedLabels.length === 1 ? selectedLabels[0] : null}
+        />
 
         <ModalDeleteCatalogo
           label={selectedLabels.length > 0 ? selectedLabels[0] : null}
