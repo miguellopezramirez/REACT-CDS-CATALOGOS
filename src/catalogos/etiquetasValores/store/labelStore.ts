@@ -124,7 +124,7 @@ export const addOperation = (operation: Operation) => {
           imagen: updates.IMAGEN,
           ruta: updates.ROUTE, // 'ruta' en el estado local, 'ROUTE' en el payload
           descripcion: updates.DESCRIPCION,
-          status: 'Critical',
+          status: 'Negative', // Changed to Negative for red color as requested
           subRows: label.subRows
         };
         console.log('Etiqueta actualizada (estado local):', JSON.stringify(updatedLabel));
@@ -217,7 +217,7 @@ export const addOperation = (operation: Operation) => {
               imagen: updates.IMAGEN,
               ruta: updates.ROUTE,
 
-              status: 'Critical',
+              status: 'Negative', // Changed to Negative for red color as requested
             } as TableSubRow;
           }
           return subRow;
@@ -231,34 +231,34 @@ export const addOperation = (operation: Operation) => {
       return label;
     });
   } else if (operation.collection === 'values' && operation.action === 'DELETE') {
-  console.log('Iniciando operación DELETE para un Valor');
+    console.log('Iniciando operación DELETE para un Valor');
 
-  const valorId = operation.payload.id;
-  const parentId = operation.payload.IDETIQUETA;
+    const valorId = operation.payload.id;
+    const parentId = operation.payload.IDETIQUETA;
 
-  labels = labels.map(label => {
-    if (label.idetiqueta === parentId && label.parent) {
+    labels = labels.map(label => {
+      if (label.idetiqueta === parentId && label.parent) {
 
-      const updatedSubRows = label.subRows.map(subRow => {
-        if (subRow.idvalor === valorId) {
-          console.log('Marcando valor como eliminado:', valorId);
-          return {
-            ...subRow,
-            status: 'Negative' 
-          };
-        }
-        return subRow;
-      });
+        const updatedSubRows = label.subRows.map(subRow => {
+          if (subRow.idvalor === valorId) {
+            console.log('Marcando valor como eliminado:', valorId);
+            return {
+              ...subRow,
+              status: 'Negative'
+            };
+          }
+          return subRow;
+        });
 
-      return {
-        ...label,
-        subRows: updatedSubRows
-      };
-    }
+        return {
+          ...label,
+          subRows: updatedSubRows
+        };
+      }
 
-    return label;
-  });
-} 
+      return label;
+    });
+  }
 
   notifyListeners();
 };

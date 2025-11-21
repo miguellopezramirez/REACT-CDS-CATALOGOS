@@ -2,7 +2,7 @@
 
 import { AnalyticalTable, AnalyticalTableSelectionMode, Tokenizer, Token, AnalyticalTableHooks } from '@ui5/webcomponents-react';
 import { TableParentRow, TableSubRow } from '../services/labelService';
-import { useMemo } from 'react';
+import { useMemo, useRef, useLayoutEffect } from 'react';
 import { Title } from '@ui5/webcomponents-react';
 import { setLabels } from '../store/labelStore';
 
@@ -10,6 +10,8 @@ interface TableLabelsProps {
   data: TableParentRow[];
   onSelectionChange?: (labels: TableParentRow[]) => void;
   onValorSelectionChange?: (valores: TableSubRow[], parent: TableParentRow | null) => void;
+  initialExpanded?: Record<string, boolean>;
+  onExpandChange?: (expanded: Record<string, boolean>) => void;
 }
 
 // Columnas para la tabla principal (Catálogos)
@@ -50,57 +52,121 @@ const childColumns = [
   { Header: "DESCRIPCION", accessor: "descripcion" },
 ];
 
-const TableLabels = ({ data, onSelectionChange, onValorSelectionChange }: TableLabelsProps) => {
+// --- WRAPPER CON ALTURA MATEMÁTICA EXACTA ---
+const SubTableWrapper = ({ values, parentData, handleChildSelectInternal }: { values: TableSubRow[], parentData: TableParentRow, handleChildSelectInternal: (selectedValores: TableSubRow[], parentData: TableParentRow) => void }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Transformar data para evitar que AnalyticalTable use 'subRows' automáticamente (evita ghost rows)
+  const ROW_HEIGHT = 44;
+  const HEADER_HEIGHT = 44;
+  const TITLE_SPACE = 40;
+
+  const maxVisibleRows = 10;
+  const rowsToShow = values.length > maxVisibleRows ? maxVisibleRows : values.length;
+  const calculatedHeight = (rowsToShow * ROW_HEIGHT) + HEADER_HEIGHT + TITLE_SPACE + 10;
+
+  useLayoutEffect(() => {
+    window.dispatchEvent(new Event('resize'));
+  }, [values.length]);
+
+  const tableHooks = [AnalyticalTableHooks.useManualRowSelect('isSelected')];
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        height: `${calculatedHeight}px`,
+        padding: '0 1rem 1rem 1rem',
+        width: '100%',
+        boxSizing: 'border-box',
+        overflow: 'hidden'
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <Title level='H5' style={{ marginBottom: '0.5rem', height: '26px' }}>
+        Valores para: {parentData.etiqueta}
+      </Title>
+
+      <div style={{ height: `calc(100% - 30px)` }}>
+        <AnalyticalTable
+          data={values}
+          columns={childColumns}
+          selectionMode={AnalyticalTableSelectionMode.Multiple}
+          isTreeTable={false}
+          minRows={1}
+          visibleRows={rowsToShow}
+          headerRowHeight={HEADER_HEIGHT}
+          rowHeight={ROW_HEIGHT}
+          withRowHighlight={true}
+          reactTableOptions={{
+            // AQUÍ IMPORTANTE: Usar un ID único para las filas de la subtabla
+            getRowId: (row: any) => `sub-child-${row.idvalor}`
+          }}
+          tableHooks={tableHooks}
+          onRowSelect={(e) => {
+            if (!e || !e.detail) return;
+            const { selectedRowIds, rowsById } = e.detail;
+            const selectedRows = Object.keys(selectedRowIds).map(id => rowsById[id]);
+            const selectedValores = selectedRows.map(r => r.original as TableSubRow);
+            handleChildSelectInternal(selectedValores, parentData);
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialExpanded, onExpandChange }: TableLabelsProps) => {
+
+  const dataRef = useRef(data);
+  const onSelectionChangeRef = useRef(onSelectionChange);
+  const onValorSelectionChangeRef = useRef(onValorSelectionChange);
+
+  dataRef.current = data;
+  onSelectionChangeRef.current = onSelectionChange;
+  onValorSelectionChangeRef.current = onValorSelectionChange;
+
   const tableData = useMemo(() => {
     return data.map(row => ({
       ...row,
-      // Renombramos subRows a values para uso interno, y dejamos subRows undefined o vacío para la tabla
       values: row.subRows,
       subRows: undefined
     }));
   }, [data]);
 
-  // Configuración para mantener el estado de expansión y selección
   const reactTableOptions = useMemo(() => ({
     autoResetExpanded: false,
+    initialState: { expanded: initialExpanded || {} },
+
+    getSubRows: (row: any) => row.values,
+
+    // --- CORRECCIÓN CRÍTICA AQUÍ ---
     getRowId: (row: any) => {
-      if (row.idetiqueta) {
-        return `parent-${row.idetiqueta}`;
+      // Primero verificamos si es un hijo (tiene idvalor)
+      if (row.idvalor) {
+        return `child-${row.idvalor}`;
       }
-      return `child-${row.idvalor}`;
+      // Si no, asumimos que es padre (tiene idetiqueta y es parent)
+      return `parent-${row.idetiqueta}`;
     }
-  }), []);
+    // -------------------------------
+  }), [initialExpanded]);
 
-  const handleChildSelect = (selectedValores: TableSubRow[], parentData: TableParentRow) => {
-    // 1. Actualizar datos globales (Store)
-    // NOTA: Ahora permitimos selección múltiple real, incluso a través de catálogos si se desea,
-    // pero para mantener consistencia con la UI (que muestra valores de un padre), 
-    // actualizamos el estado global de selección.
-
-    const updatedData = data.map(row => {
+  const handleChildSelectInternal = (selectedValores: TableSubRow[], parentData: TableParentRow) => {
+    const currentData = dataRef.current;
+    const updatedData = currentData.map(row => {
       let newSubRows = row.subRows;
-
       if (row.idetiqueta === parentData.idetiqueta) {
-        // Es el padre de los hijos seleccionados
         const selectedIds = new Set(selectedValores.map(v => v.idvalor));
         newSubRows = row.subRows.map(sub => ({
           ...sub,
           isSelected: selectedIds.has(sub.idvalor)
         }));
       }
-      // YA NO limpiamos la selección de otros padres para permitir multi-selección global si fuera necesario,
-      // o simplemente para no borrar el estado visual si el usuario colapsa/expande.
-      // Si el usuario quiere borrar, tendrá que deseleccionar.
-
       return { ...row, subRows: newSubRows };
     });
 
-    // Actualizar Store
     setLabels(updatedData);
 
-    // Calcular TODOS los valores seleccionados en TODA la tabla para pasarlos al padre
     const allSelectedValores: TableSubRow[] = [];
     updatedData.forEach(row => {
       row.subRows.forEach(sub => {
@@ -110,33 +176,18 @@ const TableLabels = ({ data, onSelectionChange, onValorSelectionChange }: TableL
       });
     });
 
-    // Notificar al componente padre con TODOS los seleccionados
-    onValorSelectionChange?.(allSelectedValores, parentData);
-
-    // Opcional: Si seleccionamos hijos, ¿limpiamos padres? 
-    // El usuario dijo "si selecciono valor se cierra tabla" -> NO.
-    // Dijo "checklist solo deberia marcarlo como seleccionado".
-    // Mantengamos la exclusividad de acciones: si hay valores seleccionados, no hay padres seleccionados para acciones.
-    onSelectionChange?.([]);
+    onValorSelectionChangeRef.current?.(allSelectedValores, parentData);
+    onSelectionChangeRef.current?.([]);
   };
 
   const handleParentSelect = (selectedParents: TableParentRow[]) => {
     const selectedIds = new Set(selectedParents.map(p => p.idetiqueta));
-
     const updatedData = data.map(row => {
       const isSelected = selectedIds.has(row.idetiqueta);
-
-      // Si seleccionamos un padre, deseleccionamos sus hijos?
-      // El usuario quiere poder borrar varios. Si selecciono padre, ¿borro hijos?
-      // Generalmente son acciones separadas.
-      // Vamos a deseleccionar hijos para evitar confusión en los botones de acción.
       const newSubRows = row.subRows.map(sub => ({ ...sub, isSelected: false }));
-
       return { ...row, isSelected, subRows: newSubRows };
     });
-
     setLabels(updatedData);
-
     onSelectionChange?.(selectedParents);
     if (selectedParents.length > 0) {
       onValorSelectionChange?.([], null);
@@ -147,76 +198,58 @@ const TableLabels = ({ data, onSelectionChange, onValorSelectionChange }: TableL
     () =>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (row: any) => {
-        if (!row || !row.original) {
-          return null;
-        }
-
-        // Usamos 'values' que es donde movimos la data, o 'subRows' si viniera del original (pero lo renombramos)
+        if (!row || !row.original) return null;
         const parentData: TableParentRow = row.original;
         // @ts-ignore
         const values = parentData.values || parentData.subRows || [];
 
         if (values.length === 0) {
           return (
-            <div style={{ padding: '1rem', textAlign: 'center', backgroundColor: 'var(--sapContent_Background)' }}>
-              No hay Valores asociados a esta Etiqueta.
+            <div style={{ padding: '1rem', textAlign: 'center' }}>
+              No hay Valores asociados.
             </div>
           );
         }
 
         return (
-          // stopPropagation para evitar que clics en la subtabla cierren el padre
-          <div style={{ padding: '0 1rem 1rem 1rem' }} onClick={(e) => e.stopPropagation()}>
-            <Title level='H4' style={{ marginBottom: '0.5rem' }}>Valores para: {parentData.etiqueta}</Title>
-            <AnalyticalTable
-              data={values as TableSubRow[]}
-              columns={childColumns}
-              selectionMode={AnalyticalTableSelectionMode.Multiple}
-              isTreeTable={false}
-              visibleRows={values.length}
-              headerRowHeight={44}
-              reactTableOptions={{
-                getRowId: (row: any) => `child-${row.idvalor}`
-              }}
-              tableHooks={tableHooks}
-              onRowSelect={(e) => {
-                if (!e || !e.detail) return;
-                const { selectedRowIds, rowsById } = e.detail;
-                const selectedRows = Object.keys(selectedRowIds).map(id => rowsById[id]);
-
-                // Siempre pasamos todos los seleccionados DE ESTA SUBTABLA
-                const selectedValores = selectedRows.map(r => r.original as TableSubRow);
-
-                // Llamamos al handler que actualizará el store y notificará al padre
-                // Nota: handleChildSelect ahora se encarga de mezclar con otras selecciones si las hubiera
-                handleChildSelect(selectedValores, parentData);
-              }}
-            />
-          </div>
+          <SubTableWrapper
+            key={`subwrapper-${parentData.idetiqueta}`}
+            values={values as TableSubRow[]}
+            parentData={parentData}
+            handleChildSelectInternal={handleChildSelectInternal}
+          />
         );
       },
-    [data, onSelectionChange, onValorSelectionChange]
+    []
   );
 
   const tableHooks = [AnalyticalTableHooks.useManualRowSelect('isSelected')];
 
   return (
     <AnalyticalTable
-      data={tableData} // Usamos la data transformada
+      data={tableData}
       columns={parentColumns}
       isTreeTable={false}
       selectionMode={AnalyticalTableSelectionMode.Multiple}
       renderRowSubComponent={renderRowSubComponent}
       tableHooks={tableHooks}
+      withRowHighlight={true}
       reactTableOptions={reactTableOptions}
+      overscanCount={5}
 
-      /* onRowClick eliminado para que la expansión solo ocurra al dar clic en la flecha (caret) */
+      onRowExpandChange={(e: any) => {
+        if (onExpandChange && e.detail) {
+          const { row, isExpanded } = e.detail;
+          if (row && row.id) {
+            onExpandChange({ [row.id]: isExpanded });
+          }
+        }
+      }}
 
       onRowSelect={(e) => {
         if (!e || !e.detail) return;
         const { selectedRowIds, rowsById } = e.detail;
         const selectedParents = Object.keys(selectedRowIds).map(id => rowsById[id].original as TableParentRow);
-
         handleParentSelect(selectedParents);
       }}
     />

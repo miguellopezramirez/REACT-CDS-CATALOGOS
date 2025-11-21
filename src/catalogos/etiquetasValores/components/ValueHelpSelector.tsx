@@ -53,7 +53,7 @@ export interface LabelData {
 export interface ValueHelpSelectorProps {
     data: LabelData[];
     value: string | null;
-    onSelect: (selectedValue: string | null) => void; 
+    onSelect: (selectedValue: string | null) => void;
     label?: string;
     placeholder?: string;
     required?: boolean;
@@ -92,7 +92,7 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
     // Filtrado para la búsqueda interna (cuando el dialog está abierto)
     const internalFilteredData = useMemo(() => {
         const lowerSearchTerm = searchTerm.toLowerCase();
-        if (!lowerSearchTerm) return data; 
+        if (!lowerSearchTerm) return data;
 
         return data
             .map(label => ({
@@ -107,19 +107,19 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
     // Renderizar items del ComboBox agrupados
     const renderComboBoxItems = useMemo(() => {
         const items: JSX.Element[] = [];
-        
+
         data.forEach((label) => {
             if (label.subRows && label.subRows.length > 0) {
                 // Agregar header del grupo
                 items.push(
-                    <ComboBoxItemGroup key={`group-${label.idetiqueta}`} headerText={ label.etiqueta} />
+                    <ComboBoxItemGroup key={`group-${label.idetiqueta}`} headerText={label.etiqueta} />
                 );
-                
+
                 // Agregar valores del grupo
                 label.subRows.forEach((valor) => {
                     items.push(
                         <ComboBoxItem
-                            key={valor.idvalor}
+                            key={`${label.idetiqueta}-${valor.idvalor}`}
                             text={valor.valor}
                             data-idvalor={valor.idvalor}
                         />
@@ -127,7 +127,7 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
                 });
             }
         });
-        
+
         return items;
     }, [data]);
 
@@ -135,7 +135,7 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
         setSearchTerm('');
         setDialogOpen(true);
     };
-    
+
     const handleCloseDialog = () => setDialogOpen(false);
 
     const handleInternalSearchChange = (event: Ui5CustomEvent<SearchDomRef>) => {
@@ -144,7 +144,7 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
 
     const handleComboBoxChange = (event: Ui5CustomEvent<ComboBoxDomRef, ComboBoxSelectionChangeEventDetail>) => {
         const selectedItem = event.detail.item;
-        
+
         if (selectedItem) {
             const idvalor = selectedItem.dataset.idvalor;
             if (idvalor) {
@@ -174,8 +174,8 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
 
     return (
         <div style={{ width: '100%', position: 'relative' }}>
-            
-            
+
+
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch', width: '100%' }}>
                 <div style={{ flex: 1, position: 'relative' }}>
                     <ComboBox
@@ -187,7 +187,7 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
                         {renderComboBoxItems}
                     </ComboBox>
                 </div>
-                
+
                 {/* Botón para abrir modal */}
                 <Button
                     design="Transparent"
@@ -196,7 +196,7 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
                     tooltip="Abrir ayuda de valor"
                     style={{ height: 'auto' }}
                 />
-                
+
                 {/* Botón Limpiar externo */}
                 {value && (
                     <Button
@@ -267,7 +267,7 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
                                 {label.etiqueta}
                             </ListItemGroup>
                             {label.subRows.map((valor, index) => (
-                                <React.Fragment key={valor.idvalor}>
+                                <React.Fragment key={`${label.idetiqueta}-${valor.idvalor}`}>
                                     <ListItemStandard
                                         data-idvalor={valor.idvalor}
                                         selected={value === valor.idvalor}
@@ -287,6 +287,6 @@ export const ValueHelpSelector: FC<ValueHelpSelectorProps> = ({
             </Dialog>
         </div>
     );
-}; 
+};
 
 export default ValueHelpSelector;

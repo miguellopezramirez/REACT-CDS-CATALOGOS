@@ -1,6 +1,6 @@
 // src/catalogos/etiquetasValores/pages/Catalogos.tsx
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Title,
   Toolbar,
@@ -17,7 +17,7 @@ import ModalSaveChanges from "../components/ModalSaveChanges";
 import ModalUpdateCatalogo from "../components/ModalUpdateCatalogo";
 import ModalUpdateValor from "../components/ModalUpdateValor";
 import { fetchLabels, TableParentRow, TableSubRow } from "../services/labelService";
-import { setLabels, getLabels, subscribe, addOperation } from "../store/labelStore";
+import { getLabels, subscribe, addOperation } from "../store/labelStore";
 import TableLabels from "../components/TableLabels";
 
 export default function Catalogos() {
@@ -26,19 +26,19 @@ export default function Catalogos() {
   const [labels, setLocalLabels] = useState<TableParentRow[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSmall, setIsSmall] = useState(false);
-  // FIC: Cambiado a array para soportar selección múltiple de valores
   const [selectedValores, setSelectedValores] = useState<TableSubRow[]>([]);
   const [selectedValorParent, setSelectedValorParent] = useState<TableParentRow | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
+  // --- 1. ESTADO NUEVO PARA CONTROLAR LA VERSIÓN DE LA TABLA ---
+  const [tableRefreshKey, setTableRefreshKey] = useState(0);
 
   useEffect(() => {
-    fetchLabels().then((transformedData) => {
-      setLabels(transformedData);
-      setLocalLabels(transformedData);
-    });
+    fetchLabels();
   }, []);
 
   useEffect(() => {
+    setLocalLabels(getLabels());
     const unsubscribe = subscribe(() => {
       setLocalLabels(getLabels());
     });
@@ -55,18 +55,31 @@ export default function Catalogos() {
     return () => mql.removeEventListener('change', onChange);
   }, []);
 
-  const handleSave = () => {
+
+  // --- 2. HANDLE SAVE SIMPLIFICADO Y POTENTE ---
+  const handleSave = async () => {
     setSaveMessage("Datos guardados correctamente.");
-    fetchLabels().then((transformedData) => {
-      setLabels(transformedData.map(item => ({ ...item, isSelected: false })));
-      setLocalLabels(transformedData.map(item => ({ ...item, isSelected: false })));
-    });
+
+    // 1. Cargar los datos nuevos
+    await fetchLabels();
+
+    // 2. Limpiar selecciones
+    setSelectedLabels([]);
+    setSelectedValores([]);
+    setSelectedValorParent(null);
+
+    // 3. LA SOLUCIÓN NUCLEAR:
+    // Al cambiar este número, React destruye la tabla actual y crea una nueva.
+    // Esto fuerza a que la tabla recalcule alturas desde CERO, sin heredar errores visuales.
+    // Es el equivalente programático a "apagar y volver a encender" el componente.
+    setTableRefreshKey(prev => prev + 1);
+
     setTimeout(() => {
       setSaveMessage("");
     }, 3000);
   };
+  // ------------------------------------------------
 
-  // Handler para marcar la etiqueta como eliminada
   const handleDeleteConfirmLabel = () => {
     selectedLabels.forEach(label => {
       addOperation({
@@ -77,7 +90,6 @@ export default function Catalogos() {
         }
       });
     });
-    // Limpiar la selección actual
     setSelectedLabels([]);
   };
 
@@ -107,6 +119,26 @@ export default function Catalogos() {
       label.seccion?.toLowerCase().includes(term)
     );
   });
+  const preparedData = useMemo(() => {
+    return filteredLabels.map(row => {
+      // Construimos el ID tal como lo usa la tabla internamente
+      const rowId = `parent-${row.idetiqueta}`;
+
+      // Verificamos si este ID está marcado como verdadero en expandedRows
+      const isRowExpanded = !!expandedRows[rowId];
+
+      return {
+        ...row,
+        // Forzamos la propiedad isExpanded en el dato mismo.
+        // React Table leerá esto al inicializarse.
+        isExpanded: isRowExpanded
+      };
+    });
+  }, [filteredLabels, expandedRows]);
+
+  const handleExpandChange = (changedExpanded: Record<string, boolean>) => {
+    setExpandedRows(prev => ({ ...prev, ...changedExpanded }));
+  };
 
   return (
     <div>
@@ -123,7 +155,6 @@ export default function Catalogos() {
         <ModalNewCatalogo compact={isSmall} />
         <ModalNewValor compact={isSmall} />
 
-        {/* Botones de Eliminar habilitados si hay al menos una selección */}
         <ModalDeleteCatalogo
           label={selectedLabels.length > 0 ? selectedLabels[0] : null}
           compact={isSmall}
@@ -136,7 +167,6 @@ export default function Catalogos() {
           onDeleteConfirm={handleDeleteConfirmValor}
         />
 
-        {/* Botones de Actualizar habilitados SOLO si hay EXACTAMENTE una selección */}
         <ModalUpdateCatalogo
           label={selectedLabels.length === 1 ? selectedLabels[0] : null}
           compact={isSmall}
@@ -167,11 +197,15 @@ export default function Catalogos() {
           {saveMessage}
         </MessageStrip>
       )}
+
+      {/* --- 3. AQUÍ USAMOS LA KEY MÁGICA --- */}
       <TableLabels
-        data={filteredLabels}
+        key={tableRefreshKey} // Tu solución del remount (NO LA QUITES)
+        data={preparedData}   // <--- CAMBIO AQUÍ: Usamos los datos preparados
+        initialExpanded={expandedRows}
+        onExpandChange={handleExpandChange}
         onSelectionChange={setSelectedLabels}
         onValorSelectionChange={(valores, parent) => {
-          // Ahora recibimos un array de valores
           setSelectedValores(valores || []);
           setSelectedValorParent(parent);
         }}
