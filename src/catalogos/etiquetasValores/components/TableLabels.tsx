@@ -15,6 +15,9 @@ interface TableLabelsProps {
   onExpandChange?: (expanded: Record<string, boolean>) => void;
 }
 
+// ... (Mantén los componentes PopoverCell e ImagePopoverCell y las definiciones de columnas parentColumns y childColumns EXACTAMENTE COMO ESTABAN) ...
+// Para ahorrar espacio, asumo que el código de PopoverCell, ImagePopoverCell, parentColumns y childColumns sigue aquí igual.
+
 // --- COMPONENTE POPOVER PARA TEXTO ---
 const PopoverCell = ({ value }: { value: string }) => {
   const cellRef = useRef<HTMLDivElement>(null);
@@ -345,11 +348,21 @@ const SubTableWrapper = ({ values, parentData, handleChildSelectInternal }: { va
   const HEADER_HEIGHT = 44;
   const TITLE_SPACE = 40;
 
+  // Aseguramos que si hay pocos datos, la tabla no se vea rota
+  const minRowsToShow = 1;
   const maxVisibleRows = 10;
-  const rowsToShow = values.length > maxVisibleRows ? maxVisibleRows : values.length;
-  const calculatedHeight = (rowsToShow * ROW_HEIGHT) + HEADER_HEIGHT + TITLE_SPACE + 10;
 
-  const tableHooks = [AnalyticalTableHooks.useManualRowSelect('isSelected')];
+  const rowCount = values.length;
+  // Calculamos filas a mostrar (mínimo 1, máximo 10, o la cantidad exacta si está entre medio)
+  const rowsToShow = Math.min(Math.max(rowCount, minRowsToShow), maxVisibleRows);
+
+  // FIC: Agregamos un pequeño buffer de pixeles (+12) para bordes
+  const calculatedHeight = (rowsToShow * ROW_HEIGHT) + HEADER_HEIGHT + TITLE_SPACE + 12;
+
+  // FIC: CORRECCIÓN IMPORTANTE - Usar useMemo para evitar re-renderizados infinitos
+  const tableHooks = useMemo(() => [
+    AnalyticalTableHooks.useManualRowSelect('isSelected')
+  ], []);
 
   return (
     <div
@@ -359,7 +372,9 @@ const SubTableWrapper = ({ values, parentData, handleChildSelectInternal }: { va
         padding: '0 1rem 1rem 1rem',
         width: '100%',
         boxSizing: 'border-box',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        backgroundColor: 'var(--sapList_Background)', // Asegura que tenga fondo para no ver transparencias
+        borderBottom: '1px solid var(--sapList_BorderColor)' // Separador visual
       }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -381,7 +396,7 @@ const SubTableWrapper = ({ values, parentData, handleChildSelectInternal }: { va
           reactTableOptions={{
             getRowId: (row: any) => `sub-child-${row.idvalor}`
           }}
-          tableHooks={tableHooks}
+          tableHooks={tableHooks} // <--- Usando el hook memoizado
           onRowSelect={(e) => {
             if (!e || !e.detail) return;
             const { selectedRowIds, rowsById } = e.detail;
@@ -417,7 +432,8 @@ const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialE
     autoResetExpanded: false,
     initialState: { expanded: initialExpanded || {} },
 
-    getSubRows: (row: any) => row.values,
+    // FIC: getSubRows ELIMINADO para evitar la duplicidad de valores
+    // getSubRows: (row: any) => row.values,
 
     getRowId: (row: any) => {
       if (row.idvalor) {
@@ -499,7 +515,10 @@ const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialE
     []
   );
 
-  const tableHooks = [AnalyticalTableHooks.useManualRowSelect('isSelected')];
+  // FIC: CORRECCIÓN IMPORTANTE - Usar useMemo para evitar el error de "Maximum update depth"
+  const tableHooks = useMemo(() => [
+    AnalyticalTableHooks.useManualRowSelect('isSelected')
+  ], []);
 
   return (
     <AnalyticalTable
@@ -508,7 +527,7 @@ const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialE
       isTreeTable={false}
       selectionMode={AnalyticalTableSelectionMode.Multiple}
       renderRowSubComponent={renderRowSubComponent}
-      tableHooks={tableHooks}
+      tableHooks={tableHooks} // <--- Usando el hook memoizado
       withRowHighlight={true}
       reactTableOptions={reactTableOptions}
       overscanCount={5}
