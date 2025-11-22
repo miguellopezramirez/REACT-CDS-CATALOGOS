@@ -326,7 +326,7 @@ export const EditableCell = ({
       action: 'UPDATE',
       payload: {
         id: id,
-        IDETIQUETA: isParent ? undefined : parentId, // Importante para hijos
+        IDETIQUETA: isParent ? undefined : parentId, 
         updates: updates
       }
     });
@@ -338,6 +338,10 @@ export const EditableCell = ({
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      e.stopPropagation(); 
+      return; 
+    }
     if (e.key === "Enter") handleSave();
     if (e.key === "Escape") handleCancel();
   };

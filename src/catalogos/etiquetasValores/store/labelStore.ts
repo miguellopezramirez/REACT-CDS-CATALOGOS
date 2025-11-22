@@ -148,6 +148,7 @@ const updateLocalState = (operation: Operation) => {
             const newStatus = subRow.status === 'Positive' ? 'Positive' : 'Warning';
             return {
               ...subRow,
+              idvalor: updates.IDVALOR !== undefined ? updates.IDVALOR : subRow.idvalor,
               valor: updates.VALOR !== undefined ? updates.VALOR : subRow.valor,
               idvalorpa: updates.IDVALORPA !== undefined ? updates.IDVALORPA : subRow.idvalorpa,
               alias: updates.ALIAS !== undefined ? updates.ALIAS : subRow.alias,
