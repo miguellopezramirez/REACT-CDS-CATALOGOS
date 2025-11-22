@@ -1,9 +1,8 @@
-
 import { Button, MessageBox, MessageBoxType, MessageBoxAction } from '@ui5/webcomponents-react';
 import { Modals } from '@ui5/webcomponents-react/Modals';
 import { saveChanges } from '../services/labelService';
 import { useState } from 'react';
-import { clearStatuses, getLabels, setLabels, clearLabelsCache, clearOperations   } from '../store/labelStore';
+import { clearStatuses, getLabels, setLabels, clearOperations } from '../store/labelStore';
 
 interface ModalSaveChangesProps {
     onSave: () => void;
@@ -18,15 +17,18 @@ function ModalSaveChanges({ onSave, compact = false }: ModalSaveChangesProps) {
         if (result.success) {
             const currentLabels = getLabels();
 
-            const activeLabels = currentLabels.filter(label => label.status !== 'Negative');
+            // FIC: Filter out deleted parents AND deleted children
+            const activeLabels = currentLabels
+                .filter(label => label.status !== 'Negative')
+                .map(label => ({
+                    ...label,
+                    subRows: label.subRows.filter(sub => sub.status !== 'Negative')
+                }));
 
             setLabels(activeLabels);
 
-            clearStatuses(); 
-            
-            // --- FIN DEL CAMBIO ---   
             clearStatuses(); // Clear statuses on successful save
-            clearLabelsCache(); // Limpia los datos en memoria
+            //clearLabelsCache(); // Limpia los datos en memoria
             clearOperations();  // Limpia las operaciones pendientes
             Modals.showMessageBox({
                 type: MessageBoxType.Success,
@@ -56,7 +58,7 @@ function ModalSaveChanges({ onSave, compact = false }: ModalSaveChangesProps) {
             <MessageBox
                 open={showConfirmDialog}
                 type={MessageBoxType.Confirm}
-                
+
                 onClose={(event: any) => {
                     if (event === MessageBoxAction.OK) {
                         console.log("Saving changes...")

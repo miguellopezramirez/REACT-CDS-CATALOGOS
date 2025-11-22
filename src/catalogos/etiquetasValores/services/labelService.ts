@@ -1,6 +1,6 @@
 
 // src/catalogos/etiquetasValores/services/labelService.ts
-import { getLabels, setLabels, getOperations, clearOperations, clearLabelsCache } from '../store/labelStore';
+import { getLabels, setLabels, getOperations, clearOperations } from '../store/labelStore';
 import { getDbServer } from '../../../share/services/settingsService';
 // Interfaces para la respuesta de la API
 export interface ApiDetailRowReg {
@@ -191,17 +191,11 @@ export const saveChanges = async () => {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-
         const result = await response.json();
-
-        // Limpiar las operaciones pendientes después de guardarlas
         clearOperations();
 
-        // **FIC: AGREGAR ESTO**
-        clearLabelsCache(); // Limpia la caché local para forzar la recarga en fetchLabels
-        // **FIN AGREGAR ESTO**
+        // clearLabelsCache();  ¿
 
-        // Forzar la recarga de los datos desde el servidor
         console.error("Cambios guardados exitosamente.");
         return { success: true, message: 'Cambios guardados exitosamente.', data: result };
     } catch (error) {
