@@ -19,8 +19,8 @@ import '@ui5/webcomponents-icons/dist/pending';
 import '@ui5/webcomponents-icons/dist/delete';
 import { TableParentRow, TableSubRow } from '../services/labelService';
 import { useMemo, useRef, useState, useEffect,  } from 'react';
-import { createPortal,  } from 'react-dom';
 import { setLabels, getOperations, removeOperation, subscribe, Operation } from '../store/labelStore';
+import { EditableCell, ImagePopoverCell } from './EditableCell';
 
 interface TableLabelsProps {
   data: TableParentRow[];
@@ -31,254 +31,35 @@ interface TableLabelsProps {
   headerContent?: React.ReactNode;
 }
 
-
-// --- COMPONENTE POPOVER PARA TEXTO ---
-const PopoverCell = ({ value }: { value: string }) => {
-  const cellRef = useRef<HTMLDivElement>(null);
-  const [isTruncated, setIsTruncated] = useState(false);
-  const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number; flipX: boolean } | null>(null);
-
-  useEffect(() => {
-    const checkTruncation = () => {
-      if (cellRef.current) {
-        const { scrollWidth, clientWidth } = cellRef.current;
-        setIsTruncated(scrollWidth > clientWidth);
-      }
-    };
-
-    checkTruncation();
-    window.addEventListener('resize', checkTruncation);
-    return () => window.removeEventListener('resize', checkTruncation);
-  }, [value]);
-
-  const handleMouseEnter = () => {
-    if (!cellRef.current || !isTruncated) return;
-
-    const rect = cellRef.current.getBoundingClientRect();
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    const popoverMaxWidth = 400;
-    const margin = 10;
-    const estimatedPopoverHeight = 200;
-
-    const availableSpaceRight = screenWidth - rect.right;
-    const availableSpaceLeft = rect.left;
-
-    let x = 0;
-    let y = rect.top;
-    let flipX = false;
-
-    if (availableSpaceRight >= popoverMaxWidth + margin) {
-      x = rect.right + 5;
-      flipX = false;
-    } else if (availableSpaceLeft >= popoverMaxWidth + margin) {
-      x = rect.left - 5;
-      flipX = true;
-    } else if (availableSpaceLeft > availableSpaceRight) {
-      x = rect.left - 5;
-      flipX = true;
-    } else {
-      x = rect.right + 5;
-      flipX = false;
-    }
-
-    if ((rect.top + estimatedPopoverHeight) > (screenHeight - margin)) {
-      y = rect.bottom;
-    } else {
-      y = rect.top;
-    }
-
-    setPopoverPosition({ x, y, flipX });
-  };
-
-  const handleMouseLeave = () => {
-    setPopoverPosition(null);
-  };
-
-  const popoverStyle: React.CSSProperties = popoverPosition ? (() => {
-    const screenHeight = window.innerHeight;
-    const margin = 10;
-    const currentRect = cellRef.current?.getBoundingClientRect();
-
-    const transformX = popoverPosition.flipX ? '-100%' : '0';
-    let transformY = '-1px';
-
-    if (currentRect && popoverPosition.y === currentRect.bottom) {
-      transformY = '-100%';
-    }
-
-    const transform = `translate(${transformX}, ${transformY})`;
-
-    return {
-      position: 'fixed',
-      zIndex: 100000,
-      whiteSpace: 'pre-wrap',
-      width: 'max-content',
-      wordBreak: 'break-word',
-      maxWidth: '400px',
-      backgroundColor: 'var(--sapBackgroundColor, white)',
-      border: '1px solid var(--sapField_BorderColor, #888)',
-      boxShadow: '0 5px 10px rgba(0,0,0,0.3)',
-      padding: '0.5rem',
-      borderRadius: '4px',
-      left: popoverPosition.x,
-      top: popoverPosition.y,
-      transform: transform,
-      maxHeight: `calc(${screenHeight - margin * 2}px)`,
-      overflowY: 'auto',
-      color: 'var(--sapTextColor, black)',
-      fontSize: '0.875rem',
-      pointerEvents: 'none'
-    };
-  })() : {};
-
-  return (
-    <>
-      <div
-        ref={cellRef}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        style={{
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          width: '100%',
-          cursor: isTruncated ? 'help' : 'inherit'
-        }}
-      >
-        {value}
-      </div>
-      {popoverPosition && createPortal(
-        <div style={popoverStyle}>
-          {value}
-        </div>,
-        document.body
-      )}
-    </>
-  );
-};
-
-// --- NUEVO COMPONENTE POPOVER PARA IMAGENES ---
-const ImagePopoverCell = ({ value }: { value: string }) => {
-  const cellRef = useRef<HTMLDivElement>(null);
-  const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number; flipX: boolean } | null>(null);
-
-  if (!value) return null;
-
-  const handleMouseEnter = () => {
-    if (!cellRef.current) return;
-
-    const rect = cellRef.current.getBoundingClientRect();
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    const popoverMaxWidth = 320;
-    const margin = 10;
-    const estimatedPopoverHeight = 320;
-
-    const availableSpaceRight = screenWidth - rect.right;
-    const availableSpaceLeft = rect.left;
-
-    let x = 0;
-    let y = rect.top;
-    let flipX = false;
-
-    if (availableSpaceRight >= popoverMaxWidth + margin) {
-      x = rect.right + 5;
-      flipX = false;
-    } else if (availableSpaceLeft >= popoverMaxWidth + margin) {
-      x = rect.left - 5;
-      flipX = true;
-    } else if (availableSpaceLeft > availableSpaceRight) {
-      x = rect.left - 5;
-      flipX = true;
-    } else {
-      x = rect.right + 5;
-      flipX = false;
-    }
-
-    if ((rect.top + estimatedPopoverHeight) > (screenHeight - margin)) {
-      y = rect.bottom;
-    } else {
-      y = rect.top;
-    }
-
-    setPopoverPosition({ x, y, flipX });
-  };
-
-  const handleMouseLeave = () => {
-    setPopoverPosition(null);
-  };
-
-  const popoverStyle: React.CSSProperties = popoverPosition ? (() => {
-    const currentRect = cellRef.current?.getBoundingClientRect();
-    const transformX = popoverPosition.flipX ? '-100%' : '0';
-    let transformY = '0';
-
-    if (currentRect && popoverPosition.y === currentRect.bottom) {
-      transformY = '-100%';
-    }
-
-    const transform = `translate(${transformX}, ${transformY})`;
-
-    return {
-      position: 'fixed',
-      zIndex: 100000,
-      padding: '0.5rem',
-      backgroundColor: 'var(--sapBackgroundColor, white)',
-      border: '1px solid var(--sapField_BorderColor, #888)',
-      borderRadius: '4px',
-      boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
-      left: popoverPosition.x,
-      top: popoverPosition.y,
-      transform: transform,
-      pointerEvents: 'none',
-      maxWidth: '320px',
-      maxHeight: '320px',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center'
-    };
-  })() : {};
-
-  return (
-    <>
-      <div
-        ref={cellRef}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        style={{ display: 'flex', alignItems: 'center', height: '100%' }}
-      >
-        <img
-          src={value}
-          style={{ height: "40px", width: "auto", cursor: "zoom-in" }}
-          alt={value}
-        />
-      </div>
-
-      {popoverPosition && createPortal(
-        <div style={popoverStyle}>
-          <img
-            src={value}
-            style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain' }}
-            alt="preview"
-          />
-        </div>,
-        document.body
-      )}
-    </>
-  );
-};
-
 // --- DEFINICIÓN DE COLUMNAS ---
-
 const parentColumns = [
-  { Header: "Etiqueta", accessor: "etiqueta", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-  { Header: "IDETIQUETA", accessor: "idetiqueta", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
+{ 
+    Header: "Etiqueta", 
+    accessor: "etiqueta", 
+    Cell: (props: any) => <EditableCell {...props} /> 
+  },
+  { 
+    Header: "IDETIQUETA", 
+    accessor: "idetiqueta", 
+    Cell: (props: any) => <EditableCell {...props} /> 
+  },
   { Header: "IDSOCIEDAD", accessor: "idsociedad" },
   { Header: "IDCEDI", accessor: "idcedi" },
-  { Header: "COLECCION", accessor: "coleccion", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-  { Header: "SECCION", accessor: "seccion", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-  { Header: "SECUENCIA", accessor: "secuencia" },
+  { 
+    Header: "COLECCION", 
+    accessor: "coleccion", 
+    Cell: (props: any) => <EditableCell {...props} /> 
+  },
+  { 
+    Header: "SECCION", 
+    accessor: "seccion", 
+    Cell: (props: any) => <EditableCell {...props} /> 
+  },
+  { 
+    Header: "SECUENCIA", 
+    accessor: "secuencia",
+    Cell: (props: any) => <EditableCell {...props} />
+  },
   {
     Header: "INDICE",
     accessor: "indice",
@@ -299,18 +80,42 @@ const parentColumns = [
   {
     Header: "IMAGEN",
     accessor: "imagen",
-    Cell: ({ cell: { value } }: any) => <ImagePopoverCell value={value} />
+    Cell: (props: any) => <EditableCell {...props} viewComponent={ImagePopoverCell} />
   },
-  { Header: "RUTA", accessor: "ruta", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-  { Header: "DESCRIPCION", accessor: "descripcion", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
+  { 
+    Header: "RUTA", 
+    accessor: "ruta", 
+    Cell: (props: any) => <EditableCell {...props} /> 
+  },
+  { 
+    Header: "DESCRIPCION", 
+    accessor: "descripcion", 
+    Cell: (props: any) => <EditableCell {...props} /> 
+  },
 ];
 
 const childColumns = [
-  { Header: "ID VALOR", accessor: "idvalor", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-  { Header: "VALOR", accessor: "valor", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-  { Header: "ID VALOR PADRE", accessor: "idvalorpa", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-  { Header: "ALIAS", accessor: "alias", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-  { Header: "SECUENCIA", accessor: "secuencia" },
+  { 
+    Header: "ID VALOR", 
+    accessor: "idvalor", 
+    Cell: (props: any) => <EditableCell {...props} />
+  },
+{ 
+    Header: "VALOR", 
+    accessor: "valor", 
+    Cell: (props: any) => <EditableCell {...props} /> 
+  },  
+  { Header: "ID VALOR PADRE", accessor: "idvalorpa", Cell: (props: any) => <EditableCell {...props} /> },
+  { 
+    Header: "ALIAS", 
+    accessor: "alias", 
+    Cell: (props: any) => <EditableCell {...props} /> 
+  },
+  { 
+    Header: "SECUENCIA", 
+    accessor: "secuencia",
+    Cell: (props: any) => <EditableCell {...props} />
+  },
   {
     Header: "ÍNDICE",
     accessor: "indice",
@@ -331,10 +136,16 @@ const childColumns = [
   {
     Header: "IMAGEN",
     accessor: "imagen",
-    Cell: ({ cell: { value } }: any) => <ImagePopoverCell value={value} />
+    Cell: (props: any) => <EditableCell {...props} viewComponent={ImagePopoverCell} />
   },
-  { Header: "RUTA", accessor: "ruta", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-  { Header: "DESCRIPCION", accessor: "descripcion", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
+  { 
+    Header: "RUTA", 
+    accessor: "ruta", 
+    Cell: (props: any) => <EditableCell {...props} /> },
+  { 
+    Header: "DESCRIPCION", 
+    accessor: "descripcion", 
+    Cell: (props: any) => <EditableCell {...props} /> },
 ];
 
 // --- WRAPPER ---
