@@ -13,13 +13,13 @@ import {
   FlexBoxAlignItems,
   FlexBoxDirection,
   FlexBoxJustifyContent,
-  
+
 } from '@ui5/webcomponents-react';
 import '@ui5/webcomponents-icons/dist/pending';
 import '@ui5/webcomponents-icons/dist/delete';
 import { TableParentRow, TableSubRow } from '../services/labelService';
-import { useMemo, useRef, useState, useEffect,  } from 'react';
-import { createPortal,  } from 'react-dom';
+import { useMemo, useRef, useState, useEffect, } from 'react';
+import { createPortal, } from 'react-dom';
 import { setLabels, getOperations, removeOperation, subscribe, Operation } from '../store/labelStore';
 
 interface TableLabelsProps {
@@ -274,7 +274,7 @@ const ImagePopoverCell = ({ value }: { value: string }) => {
 const parentColumns = [
   { Header: "Etiqueta", accessor: "etiqueta", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
   { Header: "IDETIQUETA", accessor: "idetiqueta", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-  { Header: "IDSOCIEDAD", accessor: "idsociedad" },
+  { Header: "IDSOCIEDAD", accessor: "idsociedad", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
   { Header: "IDCEDI", accessor: "idcedi" },
   { Header: "COLECCION", accessor: "coleccion", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
   { Header: "SECCION", accessor: "seccion", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
@@ -308,7 +308,9 @@ const parentColumns = [
 const childColumns = [
   { Header: "ID VALOR", accessor: "idvalor", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
   { Header: "VALOR", accessor: "valor", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-  { Header: "ID VALOR PADRE", accessor: "idvalorpa", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
+  { Header: "VALOR PADRE", accessor: "idvalorpa", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
+  { Header: "SOCIEDAD", accessor: "idsociedad", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
+  { Header: "CEDI", accessor: "idcedi", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
   { Header: "ALIAS", accessor: "alias", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
   { Header: "SECUENCIA", accessor: "secuencia" },
   {
@@ -403,7 +405,7 @@ const SubTableWrapper = ({ values, parentData, handleChildSelectInternal }: { va
   );
 };
 
-const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialExpanded,  headerContent, onExpandChange }: TableLabelsProps) => {
+const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialExpanded, headerContent, onExpandChange }: TableLabelsProps) => {
 
   const dataRef = useRef(data);
   const onSelectionChangeRef = useRef(onSelectionChange);
@@ -527,22 +529,22 @@ const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialE
         borderBottom: '1px solid var(--sapList_BorderColor)'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: headerContent ? '0.5rem' : '0' }}>
-            <Title level="H4">Etiquetas y Valores</Title>
-            {pendingOps.length > 0 && (
+          <Title level="H4">Etiquetas y Valores</Title>
+          {pendingOps.length > 0 && (
             <Button
-                icon="pending"
-                design="Emphasized"
-                onClick={() => setShowOpsDialog(true)}
+              icon="pending"
+              design="Emphasized"
+              onClick={() => setShowOpsDialog(true)}
             >
-                Operaciones Pendientes ({pendingOps.length})
+              Operaciones Pendientes ({pendingOps.length})
             </Button>
-            )}
+          )}
         </div>
-        
+
         {headerContent && (
-            <div style={{ width: '100%' }}>
-                {headerContent}
-            </div>
+          <div style={{ width: '100%' }}>
+            {headerContent}
+          </div>
         )}
       </div>
 
@@ -578,7 +580,7 @@ const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialE
               onExpandChange({ [row.id]: isExpanded });
             }
           }
-      }}
+        }}
       />
 
       {/* Dialogo de Operaciones */}
