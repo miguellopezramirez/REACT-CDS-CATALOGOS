@@ -1,4 +1,3 @@
-// src/catalogos/etiquetasValores/pages/Catalogos.tsx
 
 import { useState, useEffect, useMemo } from "react";
 import {
@@ -140,11 +139,8 @@ export default function Catalogos() {
     setExpandedRows(prev => ({ ...prev, ...changedExpanded }));
   };
 
-  return (
-    <div>
-      <Title level="H1" size="H2" style={{ marginBottom: "1rem" }}>
-        Catálogos y Valores
-      </Title>
+  const headerContent = (
+    <>
       <Toolbar
         style={{
           padding: "0.5rem",
@@ -200,19 +196,32 @@ export default function Catalogos() {
           {saveMessage}
         </MessageStrip>
       )}
+    </>
+  );
+
+  return (
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '1rem 1rem 0 1rem' }}>
+        <Title level="H1" size="H2" style={{ marginBottom: "1rem" }}>
+            Catálogos y Valores
+        </Title>
+      </div>
 
       {/* --- 3. AQUÍ USAMOS LA KEY MÁGICA --- */}
-      <TableLabels
-        key={tableRefreshKey} // Tu solución del remount (NO LA QUITES)
-        data={preparedData}   // <--- CAMBIO AQUÍ: Usamos los datos preparados
-        initialExpanded={expandedRows}
-        onExpandChange={handleExpandChange}
-        onSelectionChange={setSelectedLabels}
-        onValorSelectionChange={(valores, parent) => {
-          setSelectedValores(valores || []);
-          setSelectedValorParent(parent);
-        }}
-      />
+      <div style={{ flex: 1, overflow: 'hidden', padding: '0 1rem 1rem 1rem' }}>
+        <TableLabels 
+            key={tableRefreshKey} // Tu solución del remount (NO LA QUITES)
+            data={preparedData}   // <--- CAMBIO AQUÍ: Usamos los datos preparados
+            initialExpanded={expandedRows}
+            onExpandChange={handleExpandChange}
+            onSelectionChange={setSelectedLabels}
+            onValorSelectionChange={(valores, parent) => {
+            setSelectedValores(valores || []);
+            setSelectedValorParent(parent);
+            }}
+            headerContent={headerContent}
+        />
+      </div>
     </div>
   );
 }

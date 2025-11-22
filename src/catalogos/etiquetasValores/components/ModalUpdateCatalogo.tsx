@@ -127,8 +127,9 @@ function ModalUpdateCatalogo({ label, compact = false }: ModalUpdateCatalogoProp
         if (validate(snapshot)) {
             try {
                 const updatePayload = {
-                    id: snapshot.idetiqueta,
+                    id: label!.idetiqueta, // Use original ID to identify the item
                     updates: {
+                        IDETIQUETA: snapshot.idetiqueta, // Include new IDETIQUETA in updates
                         IDSOCIEDAD: Number(snapshot.idsociedad) || 0,
                         IDCEDI: Number(snapshot.idcedi) || 0,
                         ETIQUETA: snapshot.etiqueta,
@@ -191,8 +192,7 @@ function ModalUpdateCatalogo({ label, compact = false }: ModalUpdateCatalogoProp
                 <FormGroup headerText='Informacion del Catalogo'>
 
                     <FormItem labelContent={<Label required>ID de la etiqueta</Label>}>
-                        {/* El ID no debería ser editable */}
-                        <Input name="idetiqueta" value={formData.idetiqueta} readonly />
+                        <Input name="idetiqueta" value={formData.idetiqueta} onInput={handleChange} />
                         {errors.idetiqueta && <span style={{ color: 'red' }}>{errors.idetiqueta}</span>}
                     </FormItem>
 

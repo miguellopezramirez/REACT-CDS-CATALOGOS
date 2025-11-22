@@ -1,11 +1,26 @@
-// src/catalogos/etiquetasValores/components/TableLabels.tsx
-
-import { AnalyticalTable, AnalyticalTableSelectionMode, Tokenizer, Token, AnalyticalTableHooks } from '@ui5/webcomponents-react';
+import {
+  AnalyticalTable,
+  AnalyticalTableSelectionMode,
+  Tokenizer,
+  Token,
+  AnalyticalTableHooks,
+  Title,
+  Button,
+  Dialog,
+  List,
+  ListItemCustom,
+  FlexBox,
+  FlexBoxAlignItems,
+  FlexBoxDirection,
+  FlexBoxJustifyContent,
+  
+} from '@ui5/webcomponents-react';
+import '@ui5/webcomponents-icons/dist/pending';
+import '@ui5/webcomponents-icons/dist/delete';
 import { TableParentRow, TableSubRow } from '../services/labelService';
-import { useMemo, useRef, useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { Title } from '@ui5/webcomponents-react';
-import { setLabels } from '../store/labelStore';
+import { useMemo, useRef, useState, useEffect,  } from 'react';
+import { createPortal,  } from 'react-dom';
+import { setLabels, getOperations, removeOperation, subscribe, Operation } from '../store/labelStore';
 
 interface TableLabelsProps {
   data: TableParentRow[];
@@ -13,10 +28,9 @@ interface TableLabelsProps {
   onValorSelectionChange?: (valores: TableSubRow[], parent: TableParentRow | null) => void;
   initialExpanded?: Record<string, boolean>;
   onExpandChange?: (expanded: Record<string, boolean>) => void;
+  headerContent?: React.ReactNode;
 }
 
-// ... (Mantén los componentes PopoverCell e ImagePopoverCell y las definiciones de columnas parentColumns y childColumns EXACTAMENTE COMO ESTABAN) ...
-// Para ahorrar espacio, asumo que el código de PopoverCell, ImagePopoverCell, parentColumns y childColumns sigue aquí igual.
 
 // --- COMPONENTE POPOVER PARA TEXTO ---
 const PopoverCell = ({ value }: { value: string }) => {
@@ -157,9 +171,9 @@ const ImagePopoverCell = ({ value }: { value: string }) => {
     const rect = cellRef.current.getBoundingClientRect();
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
-    const popoverMaxWidth = 320; // Ancho estimado del popover de imagen
+    const popoverMaxWidth = 320;
     const margin = 10;
-    const estimatedPopoverHeight = 320; // Alto estimado
+    const estimatedPopoverHeight = 320;
 
     const availableSpaceRight = screenWidth - rect.right;
     const availableSpaceLeft = rect.left;
@@ -168,7 +182,6 @@ const ImagePopoverCell = ({ value }: { value: string }) => {
     let y = rect.top;
     let flipX = false;
 
-    // Lógica de posicionamiento horizontal
     if (availableSpaceRight >= popoverMaxWidth + margin) {
       x = rect.right + 5;
       flipX = false;
@@ -183,7 +196,6 @@ const ImagePopoverCell = ({ value }: { value: string }) => {
       flipX = false;
     }
 
-    // Lógica de posicionamiento vertical
     if ((rect.top + estimatedPopoverHeight) > (screenHeight - margin)) {
       y = rect.bottom;
     } else {
@@ -220,7 +232,6 @@ const ImagePopoverCell = ({ value }: { value: string }) => {
       top: popoverPosition.y,
       transform: transform,
       pointerEvents: 'none',
-      // Tamaño máximo del contenedor del popover
       maxWidth: '320px',
       maxHeight: '320px',
       display: 'flex',
@@ -237,7 +248,6 @@ const ImagePopoverCell = ({ value }: { value: string }) => {
         onMouseLeave={handleMouseLeave}
         style={{ display: 'flex', alignItems: 'center', height: '100%' }}
       >
-        {/* Imagen pequeña en la celda */}
         <img
           src={value}
           style={{ height: "40px", width: "auto", cursor: "zoom-in" }}
@@ -245,7 +255,6 @@ const ImagePopoverCell = ({ value }: { value: string }) => {
         />
       </div>
 
-      {/* Imagen grande en el Portal */}
       {popoverPosition && createPortal(
         <div style={popoverStyle}>
           <img
@@ -265,15 +274,11 @@ const ImagePopoverCell = ({ value }: { value: string }) => {
 const parentColumns = [
   { Header: "Etiqueta", accessor: "etiqueta", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
   { Header: "IDETIQUETA", accessor: "idetiqueta", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-
   { Header: "IDSOCIEDAD", accessor: "idsociedad" },
   { Header: "IDCEDI", accessor: "idcedi" },
-
   { Header: "COLECCION", accessor: "coleccion", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
   { Header: "SECCION", accessor: "seccion", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-
   { Header: "SECUENCIA", accessor: "secuencia" },
-
   {
     Header: "INDICE",
     accessor: "indice",
@@ -291,16 +296,12 @@ const parentColumns = [
       );
     }
   },
-
-  // CAMBIO: Usamos ImagePopoverCell
   {
     Header: "IMAGEN",
     accessor: "imagen",
     Cell: ({ cell: { value } }: any) => <ImagePopoverCell value={value} />
   },
-
   { Header: "RUTA", accessor: "ruta", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-
   { Header: "DESCRIPCION", accessor: "descripcion", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
 ];
 
@@ -327,16 +328,12 @@ const childColumns = [
       );
     }
   },
-
-  // CAMBIO: Usamos ImagePopoverCell para subtabla también
   {
     Header: "IMAGEN",
     accessor: "imagen",
     Cell: ({ cell: { value } }: any) => <ImagePopoverCell value={value} />
   },
-
   { Header: "RUTA", accessor: "ruta", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
-
   { Header: "DESCRIPCION", accessor: "descripcion", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
 ];
 
@@ -348,18 +345,14 @@ const SubTableWrapper = ({ values, parentData, handleChildSelectInternal }: { va
   const HEADER_HEIGHT = 44;
   const TITLE_SPACE = 40;
 
-  // Aseguramos que si hay pocos datos, la tabla no se vea rota
   const minRowsToShow = 1;
   const maxVisibleRows = 10;
 
   const rowCount = values.length;
-  // Calculamos filas a mostrar (mínimo 1, máximo 10, o la cantidad exacta si está entre medio)
   const rowsToShow = Math.min(Math.max(rowCount, minRowsToShow), maxVisibleRows);
 
-  // FIC: Agregamos un pequeño buffer de pixeles (+12) para bordes
   const calculatedHeight = (rowsToShow * ROW_HEIGHT) + HEADER_HEIGHT + TITLE_SPACE + 12;
 
-  // FIC: CORRECCIÓN IMPORTANTE - Usar useMemo para evitar re-renderizados infinitos
   const tableHooks = useMemo(() => [
     AnalyticalTableHooks.useManualRowSelect('isSelected')
   ], []);
@@ -373,8 +366,8 @@ const SubTableWrapper = ({ values, parentData, handleChildSelectInternal }: { va
         width: '100%',
         boxSizing: 'border-box',
         overflow: 'hidden',
-        backgroundColor: 'var(--sapList_Background)', // Asegura que tenga fondo para no ver transparencias
-        borderBottom: '1px solid var(--sapList_BorderColor)' // Separador visual
+        backgroundColor: 'var(--sapList_Background)',
+        borderBottom: '1px solid var(--sapList_BorderColor)'
       }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -396,7 +389,7 @@ const SubTableWrapper = ({ values, parentData, handleChildSelectInternal }: { va
           reactTableOptions={{
             getRowId: (row: any) => `sub-child-${row.idvalor}`
           }}
-          tableHooks={tableHooks} // <--- Usando el hook memoizado
+          tableHooks={tableHooks}
           onRowSelect={(e) => {
             if (!e || !e.detail) return;
             const { selectedRowIds, rowsById } = e.detail;
@@ -410,7 +403,7 @@ const SubTableWrapper = ({ values, parentData, handleChildSelectInternal }: { va
   );
 };
 
-const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialExpanded, onExpandChange }: TableLabelsProps) => {
+const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialExpanded,  headerContent, onExpandChange }: TableLabelsProps) => {
 
   const dataRef = useRef(data);
   const onSelectionChangeRef = useRef(onSelectionChange);
@@ -420,21 +413,26 @@ const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialE
   onSelectionChangeRef.current = onSelectionChange;
   onValorSelectionChangeRef.current = onValorSelectionChange;
 
+  const [pendingOps, setPendingOps] = useState<Operation[]>([]);
+  const [showOpsDialog, setShowOpsDialog] = useState(false);
+
+  useEffect(() => {
+    const updateOps = () => setPendingOps(getOperations());
+    updateOps();
+    return subscribe(updateOps);
+  }, []);
+
   const tableData = useMemo(() => {
     return data.map(row => ({
       ...row,
       values: row.subRows,
-      subRows: undefined
+      subRows: undefined,
     }));
   }, [data]);
 
   const reactTableOptions = useMemo(() => ({
     autoResetExpanded: false,
     initialState: { expanded: initialExpanded || {} },
-
-    // FIC: getSubRows ELIMINADO para evitar la duplicidad de valores
-    // getSubRows: (row: any) => row.values,
-
     getRowId: (row: any) => {
       if (row.idvalor) {
         return `child-${row.idvalor}`;
@@ -488,7 +486,6 @@ const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialE
 
   const renderRowSubComponent = useMemo(
     () =>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (row: any) => {
         if (!row || !row.original) return null;
         const parentData: TableParentRow = row.original;
@@ -515,39 +512,119 @@ const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialE
     []
   );
 
-  // FIC: CORRECCIÓN IMPORTANTE - Usar useMemo para evitar el error de "Maximum update depth"
   const tableHooks = useMemo(() => [
     AnalyticalTableHooks.useManualRowSelect('isSelected')
   ], []);
 
   return (
-    <AnalyticalTable
-      data={tableData}
-      columns={parentColumns}
-      isTreeTable={false}
-      selectionMode={AnalyticalTableSelectionMode.Multiple}
-      renderRowSubComponent={renderRowSubComponent}
-      tableHooks={tableHooks} // <--- Usando el hook memoizado
-      withRowHighlight={true}
-      reactTableOptions={reactTableOptions}
-      overscanCount={5}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Toolbar de Operaciones y Controles */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '0.5rem',
+        backgroundColor: 'var(--sapList_HeaderBackground)',
+        borderBottom: '1px solid var(--sapList_BorderColor)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: headerContent ? '0.5rem' : '0' }}>
+            <Title level="H4">Etiquetas y Valores</Title>
+            {pendingOps.length > 0 && (
+            <Button
+                icon="pending"
+                design="Emphasized"
+                onClick={() => setShowOpsDialog(true)}
+            >
+                Operaciones Pendientes ({pendingOps.length})
+            </Button>
+            )}
+        </div>
+        
+        {headerContent && (
+            <div style={{ width: '100%' }}>
+                {headerContent}
+            </div>
+        )}
+      </div>
 
-      onRowExpandChange={(e: any) => {
-        if (onExpandChange && e.detail) {
-          const { row, isExpanded } = e.detail;
-          if (row && row.id) {
-            onExpandChange({ [row.id]: isExpanded });
+      {/* Tabla - CAMBIO CLAVE: Eliminamos el div wrapper con overflow */}
+      <AnalyticalTable
+        columns={parentColumns}
+        data={tableData}
+        filterable
+        style={{ height: '100%' }}
+        groupable
+        selectionMode={AnalyticalTableSelectionMode.Multiple}
+        minRows={5}
+        // visibleRows={12}
+        // visibleRowCountMode="Fixed"
+        visibleRows={tableData.length}
+        renderRowSubComponent={renderRowSubComponent}
+        tableHooks={tableHooks}
+        scaleWidthMode="Smart"
+        withRowHighlight={true}
+        onRowSelect={(e) => {
+          if (!e || !e.detail) return;
+          const { selectedRowIds, rowsById } = e.detail;
+          const selectedParents = Object.keys(selectedRowIds).map(id => rowsById[id].original as TableParentRow);
+          handleParentSelect(selectedParents);
+        }}
+        reactTableOptions={reactTableOptions}
+        overscanCount={5}
+
+        onRowExpandChange={(e: any) => {
+          if (onExpandChange && e.detail) {
+            const { row, isExpanded } = e.detail;
+            if (row && row.id) {
+              onExpandChange({ [row.id]: isExpanded });
+            }
           }
-        }
       }}
+      />
 
-      onRowSelect={(e) => {
-        if (!e || !e.detail) return;
-        const { selectedRowIds, rowsById } = e.detail;
-        const selectedParents = Object.keys(selectedRowIds).map(id => rowsById[id].original as TableParentRow);
-        handleParentSelect(selectedParents);
-      }}
-    />
+      {/* Dialogo de Operaciones */}
+      <Dialog
+        open={showOpsDialog}
+        onClose={() => setShowOpsDialog(false)}
+        headerText="Operaciones Pendientes"
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'end', width: '100%', padding: '0.5rem' }}>
+            <Button onClick={() => setShowOpsDialog(false)}>Cerrar</Button>
+          </div>
+        }
+      >
+        <List>
+          {pendingOps.map((op, index) => (
+            <ListItemCustom key={op.id || index} type="Inactive">
+              <FlexBox
+                alignItems={FlexBoxAlignItems.Center}
+                justifyContent={FlexBoxJustifyContent.SpaceBetween}
+                style={{ width: '100%', padding: '0.5rem' }}
+              >
+                <FlexBox direction={FlexBoxDirection.Column}>
+                  <span style={{ fontWeight: 'bold', color: op.action === 'DELETE' ? 'var(--sapNegativeColor)' : 'var(--sapPositiveColor)' }}>
+                    {op.action} {op.collection === 'labels' ? 'Etiqueta' : 'Valor'}
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--sapContent_LabelColor)' }}>
+                    ID: {op.payload.id || op.payload.IDETIQUETA || op.payload.IDVALOR}
+                  </span>
+                  {op.action === 'UPDATE' && (
+                    <span style={{ fontSize: '0.75rem', fontStyle: 'italic' }}>
+                      Campos: {Object.keys(op.payload.updates || {}).join(', ')}
+                    </span>
+                  )}
+                </FlexBox>
+                <Button
+                  icon="delete"
+                  design="Transparent"
+                  onClick={() => op.id && removeOperation(op.id)}
+                  tooltip="Deshacer cambio"
+                />
+              </FlexBox>
+            </ListItemCustom>
+          ))}
+        </List>
+      </Dialog>
+    </div>
   );
 };
 

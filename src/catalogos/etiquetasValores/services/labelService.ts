@@ -164,8 +164,16 @@ export const saveChanges = async () => {
         return { success: true, message: 'No hay cambios que guardar.' };
     }
 
+    // Sanitize operations: remove internal fields (id, originalValues)
+    const sanitizedOperations = operations.map(op => {
+        const newOp = { ...op };
+        delete newOp.id;
+        delete newOp.originalValues;
+        return newOp;
+    });
+
     try {
-        console.log("operations:", JSON.stringify(operations, null, 2))
+        console.log("operations (sanitized):", JSON.stringify(sanitizedOperations, null, 2))
         const dbServer = getDbServer(); // Obtiene la DB seleccionada
         // Construye la URL dinámicamente
         const apiUrl = `http://localhost:3034/api/cat/crudLabelsValues?ProcessType=CRUD&LoggedUser=MIGUELLOPEZ&DBServer=${dbServer}`;
@@ -177,7 +185,7 @@ export const saveChanges = async () => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ operations: operations }),
+            body: JSON.stringify({ operations: sanitizedOperations }),
         });
 
         if (!response.ok) {
