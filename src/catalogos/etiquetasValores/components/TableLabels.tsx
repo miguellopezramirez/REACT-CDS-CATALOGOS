@@ -13,14 +13,14 @@ import {
   FlexBoxAlignItems,
   FlexBoxDirection,
   FlexBoxJustifyContent,
-  
+
 } from '@ui5/webcomponents-react';
 import '@ui5/webcomponents-icons/dist/pending';
 import '@ui5/webcomponents-icons/dist/delete';
 import { TableParentRow, TableSubRow } from '../services/labelService';
-import { useMemo, useRef, useState, useEffect,  } from 'react';
+import { useMemo, useRef, useState, useEffect, } from 'react';
 import { setLabels, getOperations, removeOperation, subscribe, Operation } from '../store/labelStore';
-import { EditableCell, ImagePopoverCell } from './EditableCell';
+import { EditableCell, ImagePopoverCell, PopoverCell } from './EditableCell';
 
 interface TableLabelsProps {
   data: TableParentRow[];
@@ -43,7 +43,7 @@ const parentColumns = [
     accessor: "idetiqueta", 
     Cell: (props: any) => <EditableCell {...props} /> 
   },
-  { Header: "IDSOCIEDAD", accessor: "idsociedad" },
+  { Header: "IDSOCIEDAD", accessor: "idsociedad", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
   { Header: "IDCEDI", accessor: "idcedi" },
   { 
     Header: "COLECCION", 
@@ -106,6 +106,8 @@ const childColumns = [
     Cell: (props: any) => <EditableCell {...props} /> 
   },  
   { Header: "ID VALOR PADRE", accessor: "idvalorpa", Cell: (props: any) => <EditableCell {...props} /> },
+  { Header: "SOCIEDAD", accessor: "idsociedad", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
+  { Header: "CEDI", accessor: "idcedi", Cell: ({ cell: { value } }: any) => <PopoverCell value={value} /> },
   { 
     Header: "ALIAS", 
     accessor: "alias", 
@@ -214,7 +216,7 @@ const SubTableWrapper = ({ values, parentData, handleChildSelectInternal }: { va
   );
 };
 
-const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialExpanded,  headerContent, onExpandChange }: TableLabelsProps) => {
+const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialExpanded, headerContent, onExpandChange }: TableLabelsProps) => {
 
   const dataRef = useRef(data);
   const onSelectionChangeRef = useRef(onSelectionChange);
@@ -338,22 +340,22 @@ const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialE
         borderBottom: '1px solid var(--sapList_BorderColor)'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: headerContent ? '0.5rem' : '0' }}>
-            <Title level="H4">Etiquetas y Valores</Title>
-            {pendingOps.length > 0 && (
+          <Title level="H4">Etiquetas y Valores</Title>
+          {pendingOps.length > 0 && (
             <Button
-                icon="pending"
-                design="Emphasized"
-                onClick={() => setShowOpsDialog(true)}
+              icon="pending"
+              design="Emphasized"
+              onClick={() => setShowOpsDialog(true)}
             >
-                Operaciones Pendientes ({pendingOps.length})
+              Operaciones Pendientes ({pendingOps.length})
             </Button>
-            )}
+          )}
         </div>
-        
+
         {headerContent && (
-            <div style={{ width: '100%' }}>
-                {headerContent}
-            </div>
+          <div style={{ width: '100%' }}>
+            {headerContent}
+          </div>
         )}
       </div>
 
@@ -389,7 +391,7 @@ const TableLabels = ({ data, onSelectionChange, onValorSelectionChange, initialE
               onExpandChange({ [row.id]: isExpanded });
             }
           }
-      }}
+        }}
       />
 
       {/* Dialogo de Operaciones */}
